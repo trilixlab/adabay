@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADRENAL re-design (binary endpoint) &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="index.html">Articles</a></li>
+    <li><a href="../news/index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+<main>
+
+<div class="page-header">
+  <h1>ADRENAL re-design (binary endpoint)</h1>
+  <p class="subtitle">Five-look Bayesian GSD on the risk-difference scale. Section 5.2 of the manuscript.</p>
+</div>
+
+<h2>Setting</h2>
+<p>The ADRENAL trial (Venkatesh et&nbsp;al., <em>NEJM</em> 2018) was a multicentre, placebo-controlled, double-blind,
+randomised clinical trial of hydrocortisone versus placebo in patients with septic shock. The primary endpoint was
+90-day all-cause mortality. With a 33% mortality rate in the placebo arm, the trial was powered to detect an absolute
+risk reduction of 5% at a two-sided 5% significance level, which required a maximum sample size of 3,800
+(1,900 per arm with 1% dropout).</p>
+
+<p>We re-implement the trial as a five-look Bayesian GSD (<em>K</em>&nbsp;=&nbsp;5), with looks equally spaced at
+<em>n</em>&nbsp;=&nbsp;380, 760, 1,140, 1,520, 1,900 patients per arm, independent Beta(1, 1) priors on the per-arm
+rates, a single-criterion efficacy rule &Pscr;(&Delta;&nbsp;&lt;&nbsp;0&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.99 on the
+risk-difference scale, and a futility rule &Pscr;(&Delta;&nbsp;&gt;&nbsp;0&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.90.</p>
+
+<h2>adabay call sequence</h2>
+<pre><code><span class="code-keyword">library</span>(adabay)
+
+des &lt;- <span class="code-function">set_design</span>(endpoint     = <span class="code-string">"binary"</span>,
+                  n_per_look   = <span class="code-function">c</span>(<span class="code-number">760</span>, <span class="code-number">1520</span>, <span class="code-number">2280</span>, <span class="code-number">3040</span>, <span class="code-number">3800</span>),
+                  effect_scale = <span class="code-string">"risk_difference"</span>,
+                  alternative  = <span class="code-string">"less"</span>)
+
+pri &lt;- <span class="code-function">set_prior</span>(endpoint = <span class="code-string">"binary"</span>,
+                 arms = <span class="code-function">list</span>(c = <span class="code-function">list</span>(family = <span class="code-string">"beta"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>),
+                             t = <span class="code-function">list</span>(family = <span class="code-string">"beta"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>)))
+
+dec &lt;- <span class="code-function">set_decision</span>(
+  efficacy = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.99</span>)),
+  futility = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.90</span>)),
+  futility_binding = <span class="code-keyword">TRUE</span>)
+
+oc_h0 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
+                         effect   = <span class="code-function">list</span>(theta_c = <span class="code-number">0.33</span>, theta_t = <span class="code-number">0.33</span>),
+                         n_trials = <span class="code-number">1e6</span>, cores = <span class="code-number">8</span>, seed = <span class="code-number">1L</span>)
+oc_h1 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
+                         effect   = <span class="code-function">list</span>(theta_c = <span class="code-number">0.33</span>, theta_t = <span class="code-number">0.28</span>),
+                         n_trials = <span class="code-number">1e6</span>, cores = <span class="code-number">8</span>, seed = <span class="code-number">1L</span>)</code></pre>
+
+<h2>Operating characteristics</h2>
+<p>At <em>R</em>&nbsp;=&nbsp;10<sup>6</sup> virtual trials per scenario the design reaches a type I error rate of
+3.12% and a power of 87.74%, with an expected sample size of 2,202 patients across both arms under <em>H<sub>1</sub></em>.</p>
+
+<table>
+<thead>
+<tr><th>Method</th><th>Trials</th><th>Type I (MC SE)</th><th>Power (MC SE)</th><th>E(N | H<sub>0</sub>)</th><th>E(N | H<sub>1</sub>)</th><th>Time (s)</th></tr>
+</thead>
+<tbody>
+<tr><td>adabay</td> <td>1,000,000</td> <td>3.12 (0.02)</td><td>87.74 (0.03)</td><td>3,241</td><td>2,202</td><td>169.1</td></tr>
+<tr><td>adabay</td> <td>10,000</td>    <td>2.88 (0.17)</td><td>88.15 (0.32)</td><td>3,251</td><td>2,200</td><td>2.0</td></tr>
+<tr><td>BATSS</td>  <td>10,000</td>    <td>2.95 (0.17)</td><td>87.97 (0.33)</td><td>3,240</td><td>2,196</td><td>~32,317</td></tr>
+<tr><td>adaptr</td> <td>10,000</td>    <td>3.40 (0.18)</td><td>87.50 (0.33)</td><td>3,234</td><td>2,206</td><td>62.7</td></tr>
+<tr><td>gsbDesign</td> <td>n/a</td>     <td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td></tr>
+</tbody>
+</table>
+
+<p class="muted">adabay runs on 8 CPU cores via <code>mclapply</code> with the L'Ecuyer combined multiple-recursive generator
+(<code>cores = 8</code>); adaptr on 8 cores via its native parallel backend; BATSS with 8 <code>mclapply</code> workers and
+INLA pinned to one thread per worker. Since the three simulation-based packages all run on 8 cores at the matched
+<em>R</em>&nbsp;=&nbsp;10,000 budget, their wall-clock times are directly comparable at equal parallelism: the
+per-virtual-trial speedups on the binary case are approximately 31&times; versus adaptr (between one and two orders of
+magnitude) and 1.6&thinsp;&times;&thinsp;10<sup>4</sup>&thinsp;&times; versus BATSS (four orders of magnitude).
+&ldquo;n/a&rdquo; marks comparators that do not support this endpoint type (gsbDesign is restricted to the normal&ndash;normal
+continuous setting).</p>
+
+<h2>Threshold calibration</h2>
+<p>The companion methodology paper calibrates a five-look design with stage-specific efficacy thresholds
+<em>p</em><sub>1:5</sub>&nbsp;=&nbsp;(0.997, 0.997, 0.997, 0.997, 0.980) and common futility threshold
+<em>q</em>&nbsp;=&nbsp;0.85, achieving type I error 2.44% and power 90.32% under the regulatory targets
+&alpha;&nbsp;&le;&nbsp;2.5% and 1&nbsp;&minus;&nbsp;&beta;&nbsp;&ge;&nbsp;90%, at expected sample size approximately
+3,073 under <em>H</em><sub>0</sub> and 2,636 under <em>H</em><sub>1</sub>. These stage-specific schedules are reproduced from a single cache by a short user-defined loop that calls
+<code>evaluate_design()</code> with the per-look decision rule (a list of <em>K</em> per-look criteria passed to
+<code>set_decision()</code>).</p>
+
+<pre><code>cache_h0 &lt;- <span class="code-function">build_cache</span>(des, pri,
+                        effect = <span class="code-function">list</span>(theta_c = <span class="code-number">0.33</span>, theta_t = <span class="code-number">0.33</span>),
+                        n_trials = <span class="code-number">1e5</span>, cores = <span class="code-number">8</span>, seed = <span class="code-number">1L</span>,
+                        threshold_grid = <span class="code-function">list</span>(efficacy = <span class="code-number">0</span>, futility = <span class="code-number">0</span>))
+cache_h1 &lt;- <span class="code-function">build_cache</span>(des, pri,
+                        effect = <span class="code-function">list</span>(theta_c = <span class="code-number">0.33</span>, theta_t = <span class="code-number">0.28</span>),
+                        n_trials = <span class="code-number">1e5</span>, cores = <span class="code-number">8</span>, seed = <span class="code-number">1L</span>,
+                        threshold_grid = <span class="code-function">list</span>(efficacy = <span class="code-number">0</span>, futility = <span class="code-number">0</span>))
+
+cal &lt;- <span class="code-function">calibrate_design</span>(
+  cache         = cache_h0, cache_alt = cache_h1,
+  alpha_target  = <span class="code-number">0.025</span>,
+  power_target  = <span class="code-number">0.90</span>,
+  efficacy_grid = <span class="code-function">seq</span>(<span class="code-number">0.95</span>, <span class="code-number">0.999</span>, by = <span class="code-number">0.001</span>),
+  futility_grid = <span class="code-function">seq</span>(<span class="code-number">0.80</span>, <span class="code-number">0.95</span>,  by = <span class="code-number">0.01</span>)
+)
+<span class="code-function">print</span>(cal$best)</code></pre>
+
+<h2>Direct simulation vs. cached grid evaluation</h2>
+<p>For a grid of 800 threshold combinations at <em>R</em>&nbsp;=&nbsp;10<sup>5</sup>, the direct path reruns
+<code>evaluate_design()</code> once per combination, while the cached path amortises a single simulation pass over
+the entire grid (on 8 cores):</p>
+
+<table>
+<thead>
+<tr><th>Step</th><th>Direct simulation (s)</th><th>Cached grid evaluation (s)</th></tr>
+</thead>
+<tbody>
+<tr><td>One-time simulation pass            </td><td>not applicable</td><td>9.6</td></tr>
+<tr><td>Per-design score (mean over 800)    </td><td>9.7            </td><td>0.05</td></tr>
+<tr><td>Total wall-clock for the 800-cell grid</td><td>~7,700       </td><td>~51</td></tr>
+</tbody>
+</table>
+
+<h2>What this exercises</h2>
+<ul>
+  <li>The beta&ndash;binomial conjugate update; the posterior tail probability of the risk difference is computed by
+      a fixed 64-node Gauss&ndash;Legendre quadrature.</li>
+  <li>Binding futility and a single-criterion efficacy rule.</li>
+  <li>The caching and calibration architecture.</li>
+</ul>
+
+<div class="note note-info">
+  <strong>Reproduce.</strong> The headline script is shipped with the package as <code>inst/examples/adrenal.R</code>.
+</div>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>Articles</h2>
+    <ul>
+      <li><a href="transform2.html">TRANSFORM-2 (continuous)</a></li>
+      <li><a href="adrenal.html">ADRENAL (binary)</a></li>
+      <li><a href="bnt162b2.html">BNT162b2 (count)</a></li>
+      <li><a href="checkmate141.html">CheckMate-141 (time-to-event)</a></li>
+    </ul>
+  </div>
+  <div class="sidebar-block">
+    <h2>Source</h2>
+    <p><a href="https://github.com/trilixlab/adabay/blob/main/inst/examples/adrenal.R"><code>inst/examples/adrenal.R</code></a></p>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer"><p>Site built for <strong>adabay 0.1.0</strong>.</p></footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>

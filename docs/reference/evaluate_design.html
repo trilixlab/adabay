@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evaluate_design() &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="../articles/index.html">Articles</a></li>
+    <li><a href="../news/index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+<main>
+
+<div class="page-header">
+  <h1><code>evaluate_design()</code></h1>
+  <p class="subtitle">Evaluate operating characteristics for a Bayesian group sequential design.</p>
+</div>
+
+<div class="section-label">Description</div>
+<p><code>evaluate_design()</code> is the single entry point for obtaining the operating characteristics of a Bayesian
+group sequential design. It is polymorphic in its first argument:</p>
+<ul>
+  <li><strong>Fused path</strong> (<code>adabay_design</code> as <code>x</code>): simulates <code>n_trials</code> virtual trials at the
+    supplied data-generating values, computes per-look posterior tail probabilities of <em>&Delta;</em> in closed form,
+    and applies the supplied decision rule to obtain the per-look stopping probabilities, the overall type I error
+    rate (or power under the alternative), and the expected sample size, all in one call. Use this for one-off
+    evaluation of a single design.</li>
+  <li><strong>Cached path</strong> (<code>adabay_cache</code> as <code>x</code>): looks up pre-computed per-look tail probabilities
+    in a cache produced once by <a href="build_cache.html"><code>build_cache()</code></a> and aggregates them under the
+    supplied decision rule, without re-simulating trials. Use this for grid-style calibration when many decision rules
+    share the same simulated trials.</li>
+</ul>
+
+<div class="section-label">Usage</div>
+<pre><code><span class="code-function">evaluate_design</span>(x, ...)
+
+<span class="code-comment"># Fused path: x is a adabay_design</span>
+<span class="code-function">evaluate_design</span>(
+  x,
+  prior,
+  decision,
+  effect,
+  accrual  = <span class="code-keyword">NULL</span>,
+  n_trials = <span class="code-number">10000L</span>,
+  cores    = <span class="code-number">1L</span>,
+  seed     = <span class="code-keyword">NULL</span>,
+  cross_core_reproducible = <span class="code-keyword">FALSE</span>,
+  ...
+)
+
+<span class="code-comment"># Cached path: x is a adabay_cache from build_cache()</span>
+<span class="code-function">evaluate_design</span>(x, decision, look_subset = <span class="code-keyword">NULL</span>, ...)</code></pre>
+
+<div class="section-label">Arguments</div>
+<dl class="args">
+  <dt>x</dt><dd>A <code>adabay_design</code> object (fused path) or a <code>adabay_cache</code> object (cached path).</dd>
+  <dt>prior</dt><dd>For the fused path only: a <code>adabay_prior</code> from <a href="set_prior.html"><code>set_prior()</code></a>.</dd>
+  <dt>decision</dt><dd>A <code>adabay_decision</code> from <a href="set_decision.html"><code>set_decision()</code></a>.</dd>
+  <dt>effect</dt><dd>For the fused path only: named list of data-generating values; see the worked examples in the package
+    vignettes for endpoint-specific names.</dd>
+  <dt>accrual</dt><dd>For the fused path only: a <a href="set_accrual.html"><code>set_accrual()</code></a> specification. <strong>Required</strong> for time-to-event designs, which are always staggered (the recruitment rate drives the calendar-time exposure cutoff); optional for the other endpoints, where it is used only to report the expected calendar duration.</dd>
+  <dt>n_trials</dt><dd>For the fused path only: number of virtual trials.</dd>
+  <dt>cores</dt><dd>For the fused path only: number of CPU cores. Defaults to 1.</dd>
+  <dt>seed</dt><dd>For the fused path only: optional integer seed.</dd>
+  <dt>cross_core_reproducible</dt><dd>For the fused path only: logical, default <code>FALSE</code>. When <code>TRUE</code>, the simulator pass is forced into a single driver process so the trial-level RNG draws are bit-identical across worker counts (intended for regulatory submissions); the default <code>FALSE</code> retains full simulator parallelism.</dd>
+  <dt>look_subset</dt><dd>For the cached path only: optional integer vector of look indices, selecting a subset of the cached
+    looks (so that a single cache built over the full union of candidate look times can serve any look-time subset).</dd>
+  <dt>...</dt><dd>Further arguments passed to methods (currently unused).</dd>
+</dl>
+
+<div class="section-label">Value</div>
+<p>An object of class <code>"adabay_oc"</code> carrying the per-look stopping probabilities, the overall type I error and
+power, the expected sample size and (when an accrual specification is supplied) the expected calendar duration.</p>
+
+<div class="section-label">Examples</div>
+<pre><code><span class="code-comment">## Fused path: evaluate a single design directly</span>
+oc &lt;- <span class="code-function">evaluate_design</span>(des, prior = pri, decision = dec,
+                      effect   = <span class="code-function">list</span>(theta_c = <span class="code-number">0.33</span>, theta_t = <span class="code-number">0.28</span>),
+                      n_trials = <span class="code-number">200L</span>, cores = <span class="code-number">1L</span>, seed = <span class="code-number">1L</span>)
+<span class="code-function">print</span>(oc)
+
+<span class="code-comment">## Cached path: build once, evaluate many decision rules cheaply</span>
+cache &lt;- <span class="code-function">build_cache</span>(des, pri,
+                     effect         = <span class="code-function">list</span>(theta_c = <span class="code-number">0.33</span>, theta_t = <span class="code-number">0.28</span>),
+                     n_trials       = <span class="code-number">200L</span>,
+                     seed           = <span class="code-number">1L</span>,
+                     threshold_grid = <span class="code-function">list</span>(efficacy = <span class="code-number">0</span>, futility = <span class="code-number">0</span>))
+oc2 &lt;- <span class="code-function">evaluate_design</span>(cache, dec)
+<span class="code-function">print</span>(oc2)
+
+<span class="code-comment">## Cached path with look_subset: three-look design from the same five-look cache</span>
+oc_3look &lt;- <span class="code-function">evaluate_design</span>(cache, decision = dec, look_subset = <span class="code-function">c</span>(<span class="code-number">2</span>, <span class="code-number">4</span>, <span class="code-number">5</span>))</code></pre>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>Related functions</h2>
+    <ul>
+      <li><a href="set_design.html"><code>set_design()</code></a></li>
+      <li><a href="set_prior.html"><code>set_prior()</code></a></li>
+      <li><a href="set_decision.html"><code>set_decision()</code></a></li>
+      <li><a href="set_accrual.html"><code>set_accrual()</code></a></li>
+      <li><a href="fit_mixture.html"><code>fit_mixture()</code></a></li>
+      <li><a href="build_cache.html"><code>build_cache()</code></a></li>
+      <li><a href="calibrate_design.html"><code>calibrate_design()</code></a></li>
+      <li><a href="summarise_oc.html"><code>summarise_oc()</code></a></li>
+    </ul>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer"><p>Site built for <strong>adabay 0.1.0</strong>.</p></footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>

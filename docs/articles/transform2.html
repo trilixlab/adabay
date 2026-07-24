@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRANSFORM-2 (continuous endpoint) &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="index.html">Articles</a></li>
+    <li><a href="../news/index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+<main>
+
+<div class="page-header">
+  <h1>TRANSFORM-2 esketamine trial (continuous endpoint)</h1>
+  <p class="subtitle">Five-look Bayesian GSD on the MADRS mean-difference scale. Section 5.1 of the manuscript.</p>
+</div>
+
+<h2>Setting</h2>
+<p>TRANSFORM-2 (Popova et&nbsp;al., <em>Am J Psychiatry</em> 2019;176:428&ndash;438) was a phase III double-blind,
+active-controlled, randomised trial of flexibly dosed esketamine nasal spray plus a newly initiated oral antidepressant
+against placebo nasal spray plus a newly initiated oral antidepressant in adults with treatment-resistant depression.
+The primary endpoint was the change from baseline in the Montgomery&ndash;&Aring;sberg Depression Rating Scale (MADRS,
+range [0, 60]) total score at Day 28 of the four-week induction phase. The trial randomised 227 patients in a 1:1 ratio
+and reported a mean MADRS change of &minus;19.8 in the esketamine arm versus &minus;15.8 in the placebo arm, with a
+treatment-versus-control difference of &minus;4.0 (95% CI &minus;7.31 to &minus;0.64, <em>p</em>&nbsp;=&nbsp;0.020),
+establishing esketamine nasal spray as the first FDA-approved treatment for treatment-resistant depression.</p>
+
+<p>We re-implement TRANSFORM-2 as a five-look Bayesian GSD (<em>K</em>&nbsp;=&nbsp;5) on the mean-difference scale.
+The data-generating model has &mu;<sub>c</sub>&nbsp;=&nbsp;&minus;15.8 in the placebo arm and
+&mu;<sub>t</sub>&nbsp;=&nbsp;&minus;19.8 in the esketamine arm, with a common within-arm standard deviation
+&sigma;&nbsp;=&nbsp;13 on the MADRS-change scale (consistent with TRANSFORM-2's per-arm dispersion). The clinically
+relevant effect is &Delta;<sup>*</sup>&nbsp;=&nbsp;&mu;<sub>t</sub>&nbsp;&minus;&nbsp;&mu;<sub>c</sub>&nbsp;=&nbsp;&minus;4,
+with &Delta;<sub>H<sub>0</sub></sub>&nbsp;=&nbsp;0. The fixed-sample design at &alpha;&nbsp;=&nbsp;0.025 (one-sided) and
+1&nbsp;&minus;&nbsp;&beta;&nbsp;=&nbsp;0.90 requires <em>n</em>&nbsp;=&nbsp;222 patients per arm. The five-look GSD has
+looks equally spaced at <em>n</em>&nbsp;=&nbsp;45, 89, 133, 177, 222 patients per arm, weakly informative priors
+&mu;<sub>a</sub>&nbsp;~&nbsp;<em>N</em>(&minus;10, 10<sup>6</sup>) in both arms, a single-criterion efficacy rule
+&Pscr;(&Delta;&nbsp;&lt;&nbsp;0&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.99 and a futility rule
+&Pscr;(&Delta;&nbsp;&gt;&nbsp;0&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.90.</p>
+
+<h2>adabay call sequence</h2>
+<pre><code><span class="code-keyword">library</span>(adabay)
+
+des &lt;- <span class="code-function">set_design</span>(endpoint     = <span class="code-string">"continuous"</span>,
+                  n_per_look   = <span class="code-function">c</span>(<span class="code-number">90</span>, <span class="code-number">178</span>, <span class="code-number">266</span>, <span class="code-number">354</span>, <span class="code-number">444</span>),
+                  effect_scale = <span class="code-string">"mean_difference"</span>,
+                  alternative  = <span class="code-string">"less"</span>,
+                  sigma        = <span class="code-number">13</span>)
+
+pri &lt;- <span class="code-function">set_prior</span>(endpoint = <span class="code-string">"continuous"</span>,
+                 arms = <span class="code-function">list</span>(c = <span class="code-function">list</span>(family = <span class="code-string">"normal"</span>, mean = -<span class="code-number">10</span>, sd = <span class="code-number">1e3</span>),
+                             t = <span class="code-function">list</span>(family = <span class="code-string">"normal"</span>, mean = -<span class="code-number">10</span>, sd = <span class="code-number">1e3</span>)))
+
+dec &lt;- <span class="code-function">set_decision</span>(
+  efficacy = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.99</span>)),
+  futility = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.90</span>)),
+  futility_binding = <span class="code-keyword">TRUE</span>)
+
+oc_h0 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
+                         effect   = <span class="code-function">list</span>(mu_c = -<span class="code-number">15.8</span>, mu_t = -<span class="code-number">15.8</span>),
+                         n_trials = <span class="code-number">1e6</span>, cores = <span class="code-number">8</span>, seed = <span class="code-number">1L</span>)
+oc_h1 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
+                         effect   = <span class="code-function">list</span>(mu_c = -<span class="code-number">15.8</span>, mu_t = -<span class="code-number">19.8</span>),
+                         n_trials = <span class="code-number">1e6</span>, cores = <span class="code-number">8</span>, seed = <span class="code-number">1L</span>)
+
+<span class="code-function">print</span>(oc_h1)
+<span class="code-function">plot</span>(oc_h1)</code></pre>
+
+<h2>Operating characteristics</h2>
+<p>At <em>R</em>&nbsp;=&nbsp;10<sup>6</sup> virtual trials per scenario the re-design reaches a type I error rate of
+3.09% and a power of 85.59%, with an expected sample size of 265 patients across both arms under <em>H<sub>1</sub></em>
+(compared with the fixed-sample maximum of 444 across both arms).</p>
+
+<table>
+<thead>
+<tr><th>Method</th><th>Trials</th><th>Type I (MC SE)</th><th>Power (MC SE)</th><th>E(N | H<sub>0</sub>)</th><th>E(N | H<sub>1</sub>)</th><th>Time (s)</th></tr>
+</thead>
+<tbody>
+<tr><td>adabay</td>    <td>1,000,000</td> <td>3.09 (0.02)</td><td>85.59 (0.04)</td><td>379</td><td>265</td><td>17.1</td></tr>
+<tr><td>adabay</td>    <td>10,000</td>    <td>2.92 (0.17)</td><td>86.18 (0.35)</td><td>381</td><td>265</td><td>0.3</td></tr>
+<tr><td>BATSS</td>     <td>10,000</td>    <td>3.23 (0.18)</td><td>85.46 (0.35)</td><td>381</td><td>264</td><td>~30,724</td></tr>
+<tr><td>adaptr</td>    <td>10,000</td>    <td>3.60 (0.19)</td><td>85.40 (0.35)</td><td>379</td><td>264</td><td>66.0</td></tr>
+<tr><td>gsbDesign</td> <td>analytic</td>  <td>3.09 (&ndash;)</td><td>85.54 (&ndash;)</td><td>379</td><td>266</td><td>0.3</td></tr>
+</tbody>
+</table>
+
+<p class="muted">adabay runs on 8 CPU cores via <code>mclapply</code> with the L'Ecuyer combined multiple-recursive generator
+(<code>cores = 8</code>); adaptr on 8 cores via its native parallel backend; gsbDesign analytic on a single core; BATSS
+with 8 <code>mclapply</code> workers and INLA pinned to one thread per worker. Type I error is evaluated at &mu;<sub>t</sub>&nbsp;&minus;&nbsp;&mu;<sub>c</sub>&nbsp;=&nbsp;0 and power at
+&mu;<sub>t</sub>&nbsp;&minus;&nbsp;&mu;<sub>c</sub>&nbsp;=&nbsp;&minus;4 (the observed TRANSFORM-2 mean-difference effect).
+All three simulation-based tools and the analytic gsbDesign reference agree within Monte Carlo error.</p>
+
+<h2>What this exercises</h2>
+<ul>
+  <li>The normal&ndash;normal closed-form per-look posterior of the mean difference.</li>
+  <li>A weakly informative conjugate prior in its natural parameterisation, anchored at the placebo mean.</li>
+  <li>Binding futility and a single-criterion efficacy rule.</li>
+</ul>
+
+<div class="note note-info">
+  <strong>Reproduce.</strong> The full script is shipped with the package as <code>inst/examples/transform2.R</code>.
+</div>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>Articles</h2>
+    <ul>
+      <li><a href="transform2.html">TRANSFORM-2 (continuous)</a></li>
+      <li><a href="adrenal.html">ADRENAL (binary)</a></li>
+      <li><a href="bnt162b2.html">BNT162b2 (count)</a></li>
+      <li><a href="checkmate141.html">CheckMate-141 (time-to-event)</a></li>
+    </ul>
+  </div>
+  <div class="sidebar-block">
+    <h2>Source</h2>
+    <p><a href="https://github.com/trilixlab/adabay/blob/main/inst/examples/transform2.R"><code>inst/examples/transform2.R</code></a></p>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer"><p>Site built for <strong>adabay 0.1.0</strong>.</p></footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>

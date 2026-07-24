@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BNT162b2 vaccine trial (count endpoint) &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="index.html">Articles</a></li>
+    <li><a href="../news/index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+<main>
+
+<div class="page-header">
+  <h1>Pfizer&ndash;BioNTech BNT162b2 vaccine trial (count endpoint)</h1>
+  <p class="subtitle">Five-look Bayesian GSD on the log-rate-ratio scale. Section 5.3 of the manuscript.</p>
+</div>
+
+<h2>Setting</h2>
+<p>The Pfizer&ndash;BioNTech BNT162b2 trial (Polack et&nbsp;al., <em>NEJM</em> 2020;383:2603&ndash;2615) was a phase II/III
+randomised, observer-blinded, placebo-controlled vaccine-efficacy study in adults of two doses of the BNT162b2 mRNA
+vaccine against placebo (saline) for the prevention of laboratory-confirmed COVID-19 with onset at least seven days
+after the second dose. The primary analysis was performed under a Bayesian group sequential framework on the cumulative
+number of confirmed cases across arms, with four planned interim analyses at 32, 62, 92 and 120 accrued cases and a
+final analysis at 164 cases. The protocol was powered to detect a vaccine efficacy
+VE&nbsp;&gt;&nbsp;30% (rate ratio &Delta;<sup>*</sup>&nbsp;=&nbsp;&lambda;<sub>t</sub>&thinsp;/&thinsp;&lambda;<sub>c</sub>&nbsp;&lt;&nbsp;0.70)
+under a design alternative of VE&nbsp;=&nbsp;60% (rate ratio 0.40), with a placebo background incidence rate of
+approximately &lambda;<sub>c</sub>&nbsp;=&nbsp;0.018 cases per person-year. Case events under a homogeneous Poisson
+process in each arm satisfy the gamma&ndash;Poisson conjugate pair exactly, so the strict Poisson model implemented by
+adabay is the natural design-stage idealisation.</p>
+
+<p>We re-implement the BNT162b2 design as a five-look Bayesian GSD (<em>K</em>&nbsp;=&nbsp;5) with looks placed at the
+cumulative person-time at which each prespecified case-count milestone is expected to fire under <em>H<sub>1</sub></em>.
+Under &lambda;-bar&nbsp;=&nbsp;(&lambda;<sub>c</sub>&nbsp;+&nbsp;&lambda;<sub>t</sub>)&thinsp;/&thinsp;2&nbsp;&asymp;&nbsp;0.0126
+per person-year at the designed-to-detect alternative, the case-count grid 32, 62, 92, 120, 164 maps to cumulative
+person-time <em>E</em>&nbsp;=&nbsp;1,270, 2,460, 3,650, 4,760, 6,510 per arm. We assign independent
+Gamma(1, 1) priors on both &lambda;<sub>c</sub> and &lambda;<sub>t</sub>, a
+single-criterion efficacy rule
+&Pscr;(log&nbsp;&Delta;&nbsp;&lt;&nbsp;log&nbsp;0.70&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.99
+on the log-rate-ratio scale (the protocol superiority criterion against VE&nbsp;&gt;&nbsp;30%) and a futility rule
+&Pscr;(log&nbsp;&Delta;&nbsp;&gt;&nbsp;log&nbsp;0.70&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.90.</p>
+
+<p>The gamma&ndash;Poisson conjugate update in adabay reduces the posterior tail probability to a beta cumulative
+distribution function (Appendix B of the manuscript), so no quadrature is required and the per-trial cost is dominated
+by the count-data simulator.</p>
+
+<h2>adabay call sequence</h2>
+<pre><code><span class="code-keyword">library</span>(adabay)
+
+des &lt;- <span class="code-function">set_design</span>(endpoint         = <span class="code-string">"count"</span>,
+                  exposure_per_look = <span class="code-function">c</span>(<span class="code-number">2540</span>, <span class="code-number">4920</span>, <span class="code-number">7300</span>, <span class="code-number">9520</span>, <span class="code-number">13020</span>),
+                  effect_scale     = <span class="code-string">"log_rate_ratio"</span>,
+                  alternative      = <span class="code-string">"less"</span>,
+                  delta_null       = <span class="code-function">log</span>(<span class="code-number">0.70</span>))
+
+pri &lt;- <span class="code-function">set_prior</span>(endpoint = <span class="code-string">"count"</span>,
+                 arms = <span class="code-function">list</span>(c = <span class="code-function">list</span>(family = <span class="code-string">"gamma"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>),
+                             t = <span class="code-function">list</span>(family = <span class="code-string">"gamma"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>)))
+
+dec &lt;- <span class="code-function">set_decision</span>(
+  efficacy = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-function">log</span>(<span class="code-number">0.70</span>), threshold_prob = <span class="code-number">0.99</span>)),
+  futility = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-function">log</span>(<span class="code-number">0.70</span>), threshold_prob = <span class="code-number">0.90</span>)),
+  futility_binding = <span class="code-keyword">TRUE</span>)
+
+oc_h0 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
+                         effect   = <span class="code-function">list</span>(lambda_c = <span class="code-number">0.018</span>, lambda_t = <span class="code-number">0.0126</span>),
+                         n_trials = <span class="code-number">1e6</span>, cores = <span class="code-number">8</span>, seed = <span class="code-number">1L</span>)
+oc_h1 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
+                         effect   = <span class="code-function">list</span>(lambda_c = <span class="code-number">0.018</span>, lambda_t = <span class="code-number">0.0072</span>),
+                         n_trials = <span class="code-number">1e6</span>, cores = <span class="code-number">8</span>, seed = <span class="code-number">1L</span>)</code></pre>
+
+<p>The <em>H<sub>0</sub></em> scenario fixes the rate ratio at the superiority threshold
+(&Delta;<sup>*</sup>&nbsp;=&nbsp;0.70, VE&nbsp;=&nbsp;30%), so the type I error rate reported under this scenario is the
+rate at which the design declares VE&nbsp;&gt;&nbsp;30% when in fact VE&nbsp;=&nbsp;30%. The <em>H<sub>1</sub></em>
+scenario uses the designed-to-detect alternative (&Delta;<sup>*</sup>&nbsp;=&nbsp;0.40, VE&nbsp;=&nbsp;60%). The actual
+trial observed an outcome far inside the rejection region (eight vaccine cases versus 162 placebo cases at the final
+analysis, VE&nbsp;=&nbsp;95.0%) and crossed the protocol superiority boundary at the fourth interim.</p>
+
+<h2>Operating characteristics</h2>
+<p>At <em>R</em>&nbsp;=&nbsp;10<sup>6</sup> virtual trials per scenario the re-design reaches a type I error rate of
+2.90% and a power of 87.68%, with an expected cumulative person-time of 7,662 patient-years across both arms under
+<em>H<sub>1</sub></em> (versus the fixed-sample maximum of 13,020).</p>
+
+<table>
+<thead>
+<tr><th>Method</th><th>Trials</th><th>Type I (MC SE)</th><th>Power (MC SE)</th><th>E(E | H<sub>0</sub>)</th><th>E(E | H<sub>1</sub>)</th><th>Time (s)</th></tr>
+</thead>
+<tbody>
+<tr><td>adabay</td> <td>1,000,000</td> <td>2.90 (0.02)</td><td>87.68 (0.03)</td><td>11,046</td><td>7,662</td><td>7.0</td></tr>
+<tr><td>adabay</td> <td>10,000</td>    <td>3.02 (0.17)</td><td>88.37 (0.32)</td><td>11,038</td><td>7,636</td><td>0.1</td></tr>
+<tr><td>BATSS</td>  <td>10,000</td>    <td>3.04 (0.17)</td><td>87.91 (0.33)</td><td>11,031</td><td>7,610</td><td>~35,776</td></tr>
+<tr><td>adaptr</td> <td>n/a</td>       <td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td></tr>
+<tr><td>gsbDesign</td> <td>n/a</td>     <td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td></tr>
+</tbody>
+</table>
+
+<p class="muted">adabay runs on 8 CPU cores via <code>mclapply</code> with the L'Ecuyer combined multiple-recursive generator
+(<code>cores = 8</code>); BATSS with 8 <code>mclapply</code> workers and INLA pinned to one thread per worker. The BATSS
+comparison sets <code>batss.glm</code>'s effect margin to log(0.70) with the null at the protocol rate ratio 0.70, and
+agrees with adabay within Monte Carlo error on type I error and power (under a residual person-time proxy that maps BATSS's recruited-patient interims onto
+the exposure-driven look schedule). Priors are independent Gamma(1, 1) in each arm for adabay, whereas BATSS uses its
+default INLA fit with weakly informative Gaussian priors on the log-rate regression coefficients. &ldquo;n/a&rdquo;
+marks comparators that do not support count endpoints (adaptr covers only continuous and binary outcomes; gsbDesign is
+restricted to the normal&ndash;normal continuous setting). The fixed-sample maximum is 13,020 person-years across both
+arms. Type I error is evaluated at
+&lambda;<sub>t</sub>&thinsp;/&thinsp;&lambda;<sub>c</sub>&nbsp;=&nbsp;0.70 (the protocol superiority threshold,
+VE&nbsp;=&nbsp;30%) and power at &lambda;<sub>t</sub>&thinsp;/&thinsp;&lambda;<sub>c</sub>&nbsp;=&nbsp;0.40
+(the designed-to-detect alternative, VE&nbsp;=&nbsp;60%).</p>
+
+<h2>What this exercises</h2>
+<ul>
+  <li>The gamma&ndash;Poisson conjugate update on the log-rate-ratio scale; closed-form posterior tail probability via
+      a beta CDF.</li>
+  <li>Cumulative-exposure look schedules via the <code>exposure_per_look</code> argument of <code>set_design()</code>.</li>
+  <li>A non-zero null on the log-rate-ratio scale via <code>delta_null = log(0.70)</code> and matching
+      <code>threshold_effect = log(0.70)</code> in <code>set_decision()</code>.</li>
+</ul>
+
+<div class="note note-info">
+  <strong>Reproduce.</strong> The full script is shipped with the package as <code>inst/examples/bnt162b2.R</code>.
+</div>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>Articles</h2>
+    <ul>
+      <li><a href="transform2.html">TRANSFORM-2 (continuous)</a></li>
+      <li><a href="adrenal.html">ADRENAL (binary)</a></li>
+      <li><a href="bnt162b2.html">BNT162b2 (count)</a></li>
+      <li><a href="checkmate141.html">CheckMate-141 (time-to-event)</a></li>
+    </ul>
+  </div>
+  <div class="sidebar-block">
+    <h2>Source</h2>
+    <p><a href="https://github.com/trilixlab/adabay/blob/main/inst/examples/bnt162b2.R"><code>inst/examples/bnt162b2.R</code></a></p>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer"><p>Site built for <strong>adabay 0.1.0</strong>.</p></footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+## Citation information for the adabay R package.
+## Returned by citation("adabay").
+##
+## Both entries are arXiv preprints at the time of release; the
+## journal-of-record fields will be updated on acceptance.
+
+citHeader("If you use adabay in published work, please cite both the software paper and the companion methodology paper:")
+
+bibentry(
+  bibtype  = "Misc",
+  title    = "{adabay}: an {R} package for rapid evaluation and calibration of {B}ayesian group sequential designs across common endpoint types",
+  author   = c(person(given = "Zhangyi", family = "He"),
+               person(given = "Feng",    family = "Yu")),
+  year     = "2026",
+  note     = "R package version 0.1.0. arXiv preprint (forthcoming).",
+  url      = "https://github.com/trilixlab/adabay",
+  textVersion = paste(
+    "He Z, Yu F (2026).",
+    "adabay: an R package for rapid evaluation and calibration of",
+    "Bayesian group sequential designs across common endpoint types.",
+    "R package version 0.1.0. arXiv preprint (forthcoming).",
+    "URL https://github.com/trilixlab/adabay."
+  )
+)
+
+bibentry(
+  bibtype  = "Misc",
+  title    = "Rapid evaluation and calibration of {B}ayesian group sequential designs via conjugate-mixture semi-simulation",
+  author   = c(person(given = "Zhangyi", family = "He"),
+               person(given = "Feng",    family = "Yu"),
+               person(given = "S.",      family = "Cro"),
+               person(given = "L.",      family = "Billot")),
+  year     = "2026",
+  note     = "arXiv preprint arXiv:2509.05537. Companion methodology paper.",
+  url      = "https://arxiv.org/abs/2509.05537",
+  textVersion = paste(
+    "He Z, Yu F, Cro S, Billot L (2026).",
+    "Rapid evaluation and calibration of Bayesian group sequential designs",
+    "via conjugate-mixture semi-simulation.",
+    "arXiv preprint arXiv:2509.05537. (Companion methodology paper.)",
+    "URL https://arxiv.org/abs/2509.05537."
+  )
+)

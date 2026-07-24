@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>build_cache() &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="../articles/index.html">Articles</a></li>
+    <li><a href="../news/index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+<main>
+
+<div class="page-header">
+  <h1><code>build_cache()</code></h1>
+  <p class="subtitle">Build a precomputation cache for grid evaluation.</p>
+</div>
+
+<div class="section-label">Description</div>
+<p>Implements the precomputation strategy: simulates trials once at the union of all candidate look times, and caches
+per-look posterior tail probabilities at the union of all candidate effect-size thresholds. The cache decouples the
+expensive simulation pass from threshold and look-time selection, so any specific design configuration can subsequently
+be evaluated by <a href="evaluate_design.html"><code>evaluate_design()</code></a> or
+<a href="calibrate_design.html"><code>calibrate_design()</code></a> in milliseconds.</p>
+
+<div class="section-label">Usage</div>
+<pre><code><span class="code-function">build_cache</span>(
+  design,
+  prior,
+  effect,
+  accrual                 = <span class="code-keyword">NULL</span>,
+  n_trials                = <span class="code-number">10000L</span>,
+  cores                   = <span class="code-number">1L</span>,
+  seed                    = <span class="code-keyword">NULL</span>,
+  threshold_grid          = <span class="code-keyword">NULL</span>,
+  cross_core_reproducible = <span class="code-keyword">FALSE</span>
+)</code></pre>
+
+<div class="section-label">Arguments</div>
+<dl class="args">
+  <dt>design</dt><dd>A <code>adabay_design</code> carrying the union of all candidate look times.</dd>
+  <dt>prior</dt><dd>A <code>adabay_prior</code>.</dd>
+  <dt>effect</dt><dd>Data-generating values (named list), as for <a href="evaluate_design.html"><code>evaluate_design()</code></a>.</dd>
+  <dt>accrual</dt><dd>Optional <a href="set_accrual.html"><code>set_accrual()</code></a> specification. <strong>Required</strong> for time-to-event designs, whose staggered Poisson recruitment drives the calendar-time exposure cutoff. When supplied (any endpoint) it is stored in the cache so that <a href="evaluate_design.html"><code>evaluate_design()</code></a> on the cache reports the expected duration.</dd>
+  <dt>n_trials</dt><dd>Number of virtual trials to simulate.</dd>
+  <dt>cores</dt><dd>Number of CPU cores.</dd>
+  <dt>seed</dt><dd>Optional integer seed for reproducibility.</dd>
+  <dt>threshold_grid</dt><dd>Named list with elements <code>efficacy</code> and <code>futility</code>, each a numeric
+    vector of effect-size thresholds <code>e</code> and <code>f</code> at which per-look tail probabilities are cached.</dd>
+  <dt>cross_core_reproducible</dt><dd>Logical, default <code>FALSE</code>. When <code>TRUE</code>, the simulator runs in a single driver process (the supplied <code>cores</code> is ignored for the simulation pass) so the cached per-trial RNG draws are bit-identical across worker counts.</dd>
+</dl>
+
+<div class="section-label">Value</div>
+<p>An object of class <code>"adabay_cache"</code>. <code>print()</code> displays the simulation budget, the union of look
+times, and the union of effect-size thresholds.</p>
+
+<div class="section-label">Memory footprint</div>
+<p>The cache stores per-look tail probabilities at every virtual trial and effect-size threshold. For
+<em>R</em> virtual trials, <em>K</em> candidate look times and <em>N<sub>T</sub></em> unique effect-size thresholds,
+the cache holds approximately 8&middot;<em>R</em>&middot;<em>K</em>&middot;<em>N<sub>T</sub></em> bytes. For
+<em>R</em>=10<sup>5</sup>, <em>K</em>=5, <em>N<sub>T</sub></em>=3 the cache is roughly 12&nbsp;MB.</p>
+
+<div class="section-label">Examples</div>
+<pre><code><span class="code-comment">## Build a cache, then score two threshold combinations in milliseconds</span>
+cache &lt;- <span class="code-function">build_cache</span>(
+  design   = des,
+  prior    = pri,
+  effect   = <span class="code-function">list</span>(theta_c = <span class="code-number">0.33</span>, theta_t = <span class="code-number">0.28</span>),
+  n_trials = <span class="code-number">1e5</span>,
+  cores    = <span class="code-number">1</span>,
+  seed     = <span class="code-number">1L</span>,
+  threshold_grid = <span class="code-function">list</span>(
+    efficacy = <span class="code-function">c</span>(<span class="code-number">0.0</span>, -<span class="code-number">0.05</span>),
+    futility = <span class="code-number">0.0</span>
+  )
+)
+
+oc_a &lt;- <span class="code-function">evaluate_design</span>(cache, decision = dec_a)
+oc_b &lt;- <span class="code-function">evaluate_design</span>(cache, decision = dec_b)</code></pre>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>Related functions</h2>
+    <ul>
+      <li><a href="set_design.html"><code>set_design()</code></a></li>
+      <li><a href="set_prior.html"><code>set_prior()</code></a></li>
+      <li><a href="set_decision.html"><code>set_decision()</code></a></li>
+      <li><a href="set_accrual.html"><code>set_accrual()</code></a></li>
+      <li><a href="fit_mixture.html"><code>fit_mixture()</code></a></li>
+      <li><a href="evaluate_design.html"><code>evaluate_design()</code></a></li>
+      <li><a href="build_cache.html"><code>build_cache()</code></a></li>
+      <li><a href="calibrate_design.html"><code>calibrate_design()</code></a></li>
+      <li><a href="summarise_oc.html"><code>summarise_oc()</code></a></li>
+    </ul>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer"><p>Site built for <strong>adabay 0.1.0</strong>.</p></footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>

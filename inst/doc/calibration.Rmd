@@ -1,0 +1,280 @@
+---
+title: "Calibrating a Bayesian GSD: conjugate and non-conjugate priors"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Calibrating a Bayesian GSD: conjugate and non-conjugate priors}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>"
+)
+```
+
+This vignette walks through the **calibration** workflow of a Bayesian
+group sequential design: given a fixed design, prior, and operating-
+characteristic targets, search a grid of candidate decision rules and
+return the rule that meets the targets at minimum expected sample size.
+
+The package decouples this search from the dominating cost --- the
+trial-simulation pass --- via the caching API: `build_cache()` runs the
+simulation pass once per scenario, and `calibrate_design()` or
+`evaluate_design()` then scores any candidate threshold combination from
+the cache in milliseconds.
+
+We walk through the workflow on the ADRENAL re-design under two scenarios
+that differ only in the prior:
+
+1. **Conjugate prior** --- independent $\mathrm{Beta}(1, 1)$ priors.
+2. **Non-conjugate prior** --- logit-normal on the control rate,
+   approximated by a beta mixture via `fit_mixture()`.
+
+The simulation budget is `n_trials = 5000` per cache to keep the vignette
+quick. Raising to `n_trials = 1e5` (or more) recovers manuscript precision
+with no change to the workflow.
+
+```{r design, message = FALSE}
+library(adabay)
+
+des <- set_design(
+  endpoint     = "binary",
+  n_per_look   = c(760, 1520, 2280, 3040, 3800),
+  effect_scale = "risk_difference",
+  alternative  = "less"
+)
+
+R_CACHE <- 5000L
+
+threshold_grid <- list(efficacy = 0, futility = 0)
+```
+
+# 1. Calibration under a conjugate prior
+
+We build one cache under the null ($\theta_c = \theta_t = 0.33$) for the
+type I error rate, and one under the alternative ($\theta_t = 0.28$) for
+the power and the expected sample size. Both caches use the same fixed
+seed, so every candidate threshold combination is scored on the same
+simulated data.
+
+```{r conj-prior, message = FALSE}
+pri_conj <- set_prior(
+  endpoint = "binary",
+  arms = list(c = list(family = "beta", a = 1, b = 1),
+              t = list(family = "beta", a = 1, b = 1))
+)
+
+cache_conj_h0 <- build_cache(
+  des, pri_conj,
+  effect   = list(theta_c = 0.33, theta_t = 0.33),
+  n_trials = R_CACHE, cores = 1, seed = 1L,
+  threshold_grid = threshold_grid
+)
+cache_conj_h1 <- build_cache(
+  des, pri_conj,
+  effect   = list(theta_c = 0.33, theta_t = 0.28),
+  n_trials = R_CACHE, cores = 1, seed = 1L,
+  threshold_grid = threshold_grid
+)
+```
+
+## 1a. Common-across-looks calibration
+
+`calibrate_design()` sweeps a grid of common-across-looks
+posterior-probability thresholds $(p, q)$ against the type I error rate
+upper bound and the power lower bound. Try the conventional
+`power_target = 0.90` first:
+
+```{r conj-calibrate-v1}
+cal_conj_90 <- calibrate_design(
+  cache         = cache_conj_h0,
+  cache_alt     = cache_conj_h1,
+  alpha_target  = 0.025,
+  power_target  = 0.90,
+  efficacy_grid = seq(0.95, 0.999, by = 0.005),
+  futility_grid = seq(0.80, 0.95,  by = 0.05)
+)
+is.null(cal_conj_90$best)
+```
+
+No $(p, q)$ on this grid reaches 90% power at $\alpha \le 0.025$
+(`calibrate_design()` warns and returns `best = NULL` rather than
+silently picking a design that doesn't meet the targets). This is a
+real feature of a *single, constant* threshold applied at every look: raising
+$p$ to control type I error costs power at every look equally, including
+the final one, so a **common** threshold cannot reach as high a power at
+a given type I error as a threshold shaped across looks can (see 1b
+below). Following the warning's own suggestion, relax the power target to
+0.80:
+
+```{r conj-calibrate}
+cal_conj <- calibrate_design(
+  cache         = cache_conj_h0,
+  cache_alt     = cache_conj_h1,
+  alpha_target  = 0.025,
+  power_target  = 0.80,
+  efficacy_grid = seq(0.95, 0.999, by = 0.005),
+  futility_grid = seq(0.80, 0.95,  by = 0.05)
+)
+head(cal_conj$grid)
+```
+
+The grid records the type I error rate, the power and the expected
+sample size at every $(p, q)$ combination. The best design at the
+targets is `cal_conj$best` --- an `adabay_calibration_best` object
+carrying `p`, `q`, `type_I` (from the $H_0$ cache), `power` and
+`expected_sample_size` (from the $H_1$ cache) as plain fields, plus the
+full `adabay_oc` objects for each hypothesis as `$oc_h0` / `$oc_h1`.
+
+```{r conj-best}
+if (!is.null(cal_conj$best)) {
+  cal_conj$best
+} else {
+  cat("No (p, q) in the searched grid met both alpha and power targets",
+      "at R =", R_CACHE, "per cache; raise R or widen the grid.\n")
+}
+```
+
+## 1b. Stage-specific calibration
+
+For Haybittle-Peto-style schedules (stringent interim thresholds, near-
+nominal final), a short `evaluate_design()` loop against the same caches
+is sufficient. No new simulation pass is required.
+
+```{r conj-stage}
+p_stage <- c(0.998, 0.998, 0.998, 0.998, 0.9775)
+q_stage <- 0.90
+
+dec_stage <- set_decision(
+  efficacy = lapply(p_stage, function(p)
+    list(list(threshold_effect = 0, threshold_prob = p))),
+  futility = list(list(threshold_effect = 0, threshold_prob = q_stage)),
+  futility_binding = TRUE
+)
+
+oc_conj_stage_h0 <- evaluate_design(cache_conj_h0, dec_stage)
+oc_conj_stage_h1 <- evaluate_design(cache_conj_h1, dec_stage)
+
+cat(sprintf("Conjugate prior, stage-specific p_1:5 = (0.998, 0.998, 0.998, 0.998, 0.9775):\n"))
+cat(sprintf("  Type I error rate  = %.2f%%\n", 100 * oc_conj_stage_h0$alpha))
+cat(sprintf("  Power              = %.2f%%\n", 100 * oc_conj_stage_h1$alpha))
+cat(sprintf("  E(N | H1)          = %.0f patients\n",
+            oc_conj_stage_h1$expected_sample_size))
+```
+
+The expected sample size and per-look stopping probabilities can be
+inspected via the `print()` and `plot()` methods on the returned
+`adabay_oc`.
+
+```{r conj-plot, fig.alt = "Per-look stopping probabilities for the stage-specific calibrated design under the conjugate prior."}
+if (requireNamespace("ggplot2", quietly = TRUE)) plot(oc_conj_stage_h1)
+```
+
+# 2. Calibration under a non-conjugate prior
+
+The same workflow applies once we replace `pri_conj` with a mixture-
+approximated logit-normal prior on the control rate.
+
+```{r nonconj-prior, message = FALSE, warning = FALSE}
+logit_normal_density <- function(theta) {
+  meanlog <- -0.7
+  sdlog   <-  0.4
+  z <- log(theta / (1 - theta))
+  dnorm(z, meanlog, sdlog) / (theta * (1 - theta))
+}
+
+pri_c_arm <- fit_mixture(
+  endpoint         = "binary",
+  arm              = "c",
+  prior            = logit_normal_density,
+  n_components_max = 5L,
+  tol_kl           = 1e-3,
+  tol_tail         = 5e-3,
+  n_samples        = 10000L,
+  seed             = 1L
+)
+pri_c_arm
+
+pri_nc <- set_prior(
+  endpoint = "binary",
+  arms     = list(c = pri_c_arm,
+                  t = list(family = "beta", a = 1, b = 1))
+)
+```
+
+The two caches are built exactly as before, only the prior is different.
+
+```{r nonconj-caches, message = FALSE}
+cache_nc_h0 <- build_cache(
+  des, pri_nc,
+  effect   = list(theta_c = 0.33, theta_t = 0.33),
+  n_trials = R_CACHE, cores = 1, seed = 1L,
+  threshold_grid = threshold_grid
+)
+cache_nc_h1 <- build_cache(
+  des, pri_nc,
+  effect   = list(theta_c = 0.33, theta_t = 0.28),
+  n_trials = R_CACHE, cores = 1, seed = 1L,
+  threshold_grid = threshold_grid
+)
+```
+
+## 2a. Common-across-looks calibration
+
+Same `power_target = 0.80` as 1a, for the same reason: a single common
+threshold across 5 looks cannot reach as high a power at this type I
+error as a properly shaped (stage-specific) schedule can.
+
+```{r nonconj-calibrate}
+cal_nc <- calibrate_design(
+  cache         = cache_nc_h0,
+  cache_alt     = cache_nc_h1,
+  alpha_target  = 0.025,
+  power_target  = 0.80,
+  efficacy_grid = seq(0.95, 0.999, by = 0.005),
+  futility_grid = seq(0.80, 0.95,  by = 0.05)
+)
+head(cal_nc$grid)
+cal_nc$best
+```
+
+## 2b. Stage-specific calibration
+
+```{r nonconj-stage}
+oc_nc_stage_h0 <- evaluate_design(cache_nc_h0, dec_stage)
+oc_nc_stage_h1 <- evaluate_design(cache_nc_h1, dec_stage)
+
+cat(sprintf("Non-conjugate prior, stage-specific p_1:5 = (0.998, 0.998, 0.998, 0.998, 0.9775):\n"))
+cat(sprintf("  Type I error rate  = %.2f%%\n", 100 * oc_nc_stage_h0$alpha))
+cat(sprintf("  Power              = %.2f%%\n", 100 * oc_nc_stage_h1$alpha))
+cat(sprintf("  E(N | H1)          = %.0f patients\n",
+            oc_nc_stage_h1$expected_sample_size))
+```
+
+# 3. Side-by-side calibrated designs
+
+The mixture prior is more informative than the flat $\mathrm{Beta}(1, 1)$
+in the central region, so for the same stage-specific schedule the type
+I error rate and the power can shift modestly relative to the conjugate
+case.
+
+```{r compare-stage}
+data.frame(
+  prior     = c("Beta(1,1) flat", "logit-normal mixture"),
+  type_I_pp = c(100 * oc_conj_stage_h0$alpha, 100 * oc_nc_stage_h0$alpha),
+  power_pp  = c(100 * oc_conj_stage_h1$alpha, 100 * oc_nc_stage_h1$alpha),
+  E_N_H1    = c(oc_conj_stage_h1$expected_sample_size,
+                oc_nc_stage_h1$expected_sample_size)
+)
+```
+
+# Summary
+
+`build_cache()` runs the simulation pass exactly once per scenario.
+Whatever the prior --- conjugate or a mixture-approximated non-conjugate
+--- the calibration step is downstream of the cache and runs in
+milliseconds per candidate threshold combination. The workflow is the
+same in both prior scenarios; the only difference is the `adabay_prior`
+object passed to `build_cache()`.

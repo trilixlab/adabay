@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Calibrating a Bayesian GSD: conjugate and non-conjugate priors</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Calibrating a Bayesian GSD: conjugate and
+non-conjugate priors</h1>
+
+
+
+<p>This vignette walks through the <strong>calibration</strong> workflow
+of a Bayesian group sequential design: given a fixed design, prior, and
+operating- characteristic targets, search a grid of candidate decision
+rules and return the rule that meets the targets at minimum expected
+sample size.</p>
+<p>The package decouples this search from the dominating cost — the
+trial-simulation pass — via the caching API: <code>build_cache()</code>
+runs the simulation pass once per scenario, and
+<code>calibrate_design()</code> or <code>evaluate_design()</code> then
+scores any candidate threshold combination from the cache in
+milliseconds.</p>
+<p>We walk through the workflow on the ADRENAL re-design under two
+scenarios that differ only in the prior:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Conjugate prior</strong> — independent <span class="math inline">\(\mathrm{Beta}(1, 1)\)</span> priors.</li>
+<li><strong>Non-conjugate prior</strong> — logit-normal on the control
+rate, approximated by a beta mixture via
+<code>fit_mixture()</code>.</li>
+</ol>
+<p>The simulation budget is <code>n_trials = 5000</code> per cache to
+keep the vignette quick. Raising to <code>n_trials = 1e5</code> (or
+more) recovers manuscript precision with no change to the workflow.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(adabay)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>des <span class="ot">&lt;-</span> <span class="fu">set_design</span>(</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">endpoint     =</span> <span class="st">&quot;binary&quot;</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="at">n_per_look   =</span> <span class="fu">c</span>(<span class="dv">760</span>, <span class="dv">1520</span>, <span class="dv">2280</span>, <span class="dv">3040</span>, <span class="dv">3800</span>),</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">effect_scale =</span> <span class="st">&quot;risk_difference&quot;</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="at">alternative  =</span> <span class="st">&quot;less&quot;</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>R_CACHE <span class="ot">&lt;-</span> <span class="dv">5000</span><span class="dt">L</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>threshold_grid <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">efficacy =</span> <span class="dv">0</span>, <span class="at">futility =</span> <span class="dv">0</span>)</span></code></pre></div>
+<div id="calibration-under-a-conjugate-prior" class="section level1">
+<h1>1. Calibration under a conjugate prior</h1>
+<p>We build one cache under the null (<span class="math inline">\(\theta_c = \theta_t = 0.33\)</span>) for the type
+I error rate, and one under the alternative (<span class="math inline">\(\theta_t = 0.28\)</span>) for the power and the
+expected sample size. Both caches use the same fixed seed, so every
+candidate threshold combination is scored on the same simulated
+data.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>pri_conj <span class="ot">&lt;-</span> <span class="fu">set_prior</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">endpoint =</span> <span class="st">&quot;binary&quot;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">arms =</span> <span class="fu">list</span>(<span class="at">c =</span> <span class="fu">list</span>(<span class="at">family =</span> <span class="st">&quot;beta&quot;</span>, <span class="at">a =</span> <span class="dv">1</span>, <span class="at">b =</span> <span class="dv">1</span>),</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>              <span class="at">t =</span> <span class="fu">list</span>(<span class="at">family =</span> <span class="st">&quot;beta&quot;</span>, <span class="at">a =</span> <span class="dv">1</span>, <span class="at">b =</span> <span class="dv">1</span>))</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>cache_conj_h0 <span class="ot">&lt;-</span> <span class="fu">build_cache</span>(</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  des, pri_conj,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">effect   =</span> <span class="fu">list</span>(<span class="at">theta_c =</span> <span class="fl">0.33</span>, <span class="at">theta_t =</span> <span class="fl">0.33</span>),</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">n_trials =</span> R_CACHE, <span class="at">cores =</span> <span class="dv">1</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">threshold_grid =</span> threshold_grid</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>cache_conj_h1 <span class="ot">&lt;-</span> <span class="fu">build_cache</span>(</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>  des, pri_conj,</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>  <span class="at">effect   =</span> <span class="fu">list</span>(<span class="at">theta_c =</span> <span class="fl">0.33</span>, <span class="at">theta_t =</span> <span class="fl">0.28</span>),</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>  <span class="at">n_trials =</span> R_CACHE, <span class="at">cores =</span> <span class="dv">1</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  <span class="at">threshold_grid =</span> threshold_grid</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>)</span></code></pre></div>
+<div id="a.-common-across-looks-calibration" class="section level2">
+<h2>1a. Common-across-looks calibration</h2>
+<p><code>calibrate_design()</code> sweeps a grid of common-across-looks
+posterior-probability thresholds <span class="math inline">\((p,
+q)\)</span> against the type I error rate upper bound and the power
+lower bound. Try the conventional <code>power_target = 0.90</code>
+first:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>cal_conj_90 <span class="ot">&lt;-</span> <span class="fu">calibrate_design</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">cache         =</span> cache_conj_h0,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">cache_alt     =</span> cache_conj_h1,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">alpha_target  =</span> <span class="fl">0.025</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">power_target  =</span> <span class="fl">0.90</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">efficacy_grid =</span> <span class="fu">seq</span>(<span class="fl">0.95</span>, <span class="fl">0.999</span>, <span class="at">by =</span> <span class="fl">0.005</span>),</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">futility_grid =</span> <span class="fu">seq</span>(<span class="fl">0.80</span>, <span class="fl">0.95</span>,  <span class="at">by =</span> <span class="fl">0.05</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; Warning: calibrate_design(): no threshold combination met the alpha and power</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; targets; returning best = NULL. Inspect &#39;grid&#39; and relax the targets or widen</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; the efficacy/futility grids.</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="fu">is.null</span>(cal_conj_90<span class="sc">$</span>best)</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>No <span class="math inline">\((p, q)\)</span> on this grid reaches
+90% power at <span class="math inline">\(\alpha \le 0.025\)</span>
+(<code>calibrate_design()</code> warns and returns
+<code>best = NULL</code> rather than silently picking a design that
+doesn’t meet the targets). This is a real feature of a <em>single,
+constant</em> threshold applied at every look: raising <span class="math inline">\(p\)</span> to control type I error costs power at
+every look equally, including the final one, so a
+<strong>common</strong> threshold cannot reach as high a power at a
+given type I error as a threshold shaped across looks can (see 1b
+below). Following the warning’s own suggestion, relax the power target
+to 0.80:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>cal_conj <span class="ot">&lt;-</span> <span class="fu">calibrate_design</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">cache         =</span> cache_conj_h0,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">cache_alt     =</span> cache_conj_h1,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">alpha_target  =</span> <span class="fl">0.025</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">power_target  =</span> <span class="fl">0.80</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">efficacy_grid =</span> <span class="fu">seq</span>(<span class="fl">0.95</span>, <span class="fl">0.999</span>, <span class="at">by =</span> <span class="fl">0.005</span>),</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">futility_grid =</span> <span class="fu">seq</span>(<span class="fl">0.80</span>, <span class="fl">0.95</span>,  <span class="at">by =</span> <span class="fl">0.05</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="fu">head</span>(cal_conj<span class="sc">$</span>grid)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;       p    q type_I  power      E_N</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; 1 0.950 0.80 0.1376 0.9672 1513.920</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 2 0.950 0.85 0.1376 0.9672 1524.104</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; 3 0.950 0.90 0.1376 0.9672 1530.792</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; 4 0.950 0.95 0.1376 0.9672 1536.264</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 5 0.955 0.80 0.1264 0.9636 1558.152</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; 6 0.955 0.85 0.1264 0.9636 1568.336</span></span></code></pre></div>
+<p>The grid records the type I error rate, the power and the expected
+sample size at every <span class="math inline">\((p, q)\)</span>
+combination. The best design at the targets is
+<code>cal_conj$best</code> — an <code>adabay_calibration_best</code>
+object carrying <code>p</code>, <code>q</code>, <code>type_I</code>
+(from the <span class="math inline">\(H_0\)</span> cache),
+<code>power</code> and <code>expected_sample_size</code> (from the <span class="math inline">\(H_1\)</span> cache) as plain fields, plus the full
+<code>adabay_oc</code> objects for each hypothesis as
+<code>$oc_h0</code> / <code>$oc_h1</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(cal_conj<span class="sc">$</span>best)) {</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  cal_conj<span class="sc">$</span>best</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;No (p, q) in the searched grid met both alpha and power targets&quot;</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>      <span class="st">&quot;at R =&quot;</span>, R_CACHE, <span class="st">&quot;per cache; raise R or widen the grid.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>}</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; Calibrated design</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;   Efficacy threshold (p):  0.9950</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt;   Futility threshold (q):  0.8000</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;   Type I error (H0):       0.0180</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;   Power (H1):              0.8162</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;   Expected sample size (H1): 2428.2</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;   Note: Type I error and Power follow the calibration&#39;s futility</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt;         convention; under the default non-binding rule the efficacy</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;         probability ignores futility crossings. See $oc_h0 / $oc_h1.</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;   Full per-hypothesis operating characteristics: $oc_h0, $oc_h1</span></span></code></pre></div>
+</div>
+<div id="b.-stage-specific-calibration" class="section level2">
+<h2>1b. Stage-specific calibration</h2>
+<p>For Haybittle-Peto-style schedules (stringent interim thresholds,
+near- nominal final), a short <code>evaluate_design()</code> loop
+against the same caches is sufficient. No new simulation pass is
+required.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>p_stage <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.998</span>, <span class="fl">0.998</span>, <span class="fl">0.998</span>, <span class="fl">0.998</span>, <span class="fl">0.9775</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>q_stage <span class="ot">&lt;-</span> <span class="fl">0.90</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>dec_stage <span class="ot">&lt;-</span> <span class="fu">set_decision</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">efficacy =</span> <span class="fu">lapply</span>(p_stage, <span class="cf">function</span>(p)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="fu">list</span>(<span class="fu">list</span>(<span class="at">threshold_effect =</span> <span class="dv">0</span>, <span class="at">threshold_prob =</span> p))),</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">futility =</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="at">threshold_effect =</span> <span class="dv">0</span>, <span class="at">threshold_prob =</span> q_stage)),</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">futility_binding =</span> <span class="cn">TRUE</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>)</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>oc_conj_stage_h0 <span class="ot">&lt;-</span> <span class="fu">evaluate_design</span>(cache_conj_h0, dec_stage)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>oc_conj_stage_h1 <span class="ot">&lt;-</span> <span class="fu">evaluate_design</span>(cache_conj_h1, dec_stage)</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;Conjugate prior, stage-specific p_1:5 = (0.998, 0.998, 0.998, 0.998, 0.9775):</span><span class="sc">\n</span><span class="st">&quot;</span>))</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt; Conjugate prior, stage-specific p_1:5 = (0.998, 0.998, 0.998, 0.998, 0.9775):</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;  Type I error rate  = %.2f%%</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="dv">100</span> <span class="sc">*</span> oc_conj_stage_h0<span class="sc">$</span>alpha))</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt;   Type I error rate  = 2.46%</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;  Power              = %.2f%%</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="dv">100</span> <span class="sc">*</span> oc_conj_stage_h1<span class="sc">$</span>alpha))</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt;   Power              = 90.90%</span></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;  E(N | H1)          = %.0f patients</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>            oc_conj_stage_h1<span class="sc">$</span>expected_sample_size))</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co">#&gt;   E(N | H1)          = 2767 patients</span></span></code></pre></div>
+<p>The expected sample size and per-look stopping probabilities can be
+inspected via the <code>print()</code> and <code>plot()</code> methods
+on the returned <code>adabay_oc</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">requireNamespace</span>(<span class="st">&quot;ggplot2&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) <span class="fu">plot</span>(oc_conj_stage_h1)</span></code></pre></div>
+<p><img role="img" aria-label="Per-look stopping probabilities for the stage-specific calibrated design under the conjugate prior." src="data:image/png;base64,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" alt="Per-look stopping probabilities for the stage-specific calibrated design under the conjugate prior." /></p>
+</div>
+</div>
+<div id="calibration-under-a-non-conjugate-prior" class="section level1">
+<h1>2. Calibration under a non-conjugate prior</h1>
+<p>The same workflow applies once we replace <code>pri_conj</code> with
+a mixture- approximated logit-normal prior on the control rate.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>logit_normal_density <span class="ot">&lt;-</span> <span class="cf">function</span>(theta) {</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  meanlog <span class="ot">&lt;-</span> <span class="sc">-</span><span class="fl">0.7</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  sdlog   <span class="ot">&lt;-</span>  <span class="fl">0.4</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  z <span class="ot">&lt;-</span> <span class="fu">log</span>(theta <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> theta))</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="fu">dnorm</span>(z, meanlog, sdlog) <span class="sc">/</span> (theta <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> theta))</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>}</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>pri_c_arm <span class="ot">&lt;-</span> <span class="fu">fit_mixture</span>(</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  <span class="at">endpoint         =</span> <span class="st">&quot;binary&quot;</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  <span class="at">arm              =</span> <span class="st">&quot;c&quot;</span>,</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  <span class="at">prior            =</span> logit_normal_density,</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="at">n_components_max =</span> <span class="dv">5</span><span class="dt">L</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="at">tol_kl           =</span> <span class="fl">1e-3</span>,</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">tol_tail         =</span> <span class="fl">5e-3</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  <span class="at">n_samples        =</span> <span class="dv">10000</span><span class="dt">L</span>,</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  <span class="at">seed             =</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>)</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>pri_c_arm</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt; Fitted conjugate-mixture prior arm &#39;c&#39;</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt;   Kernel family:        beta</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt;   Mixture components:   2</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt;     [1] weight = 0.505, a = 12.82, b = 31.05</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt;     [2] weight = 0.495, a = 13.39, b = 21.52</span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a><span class="co">#&gt;   Method:               internal-EM</span></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co">#&gt;   Forward KL (samples): 0.00070</span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a><span class="co">#&gt;   Max |tail error|:     0.0032 (tol = 0.0050)</span></span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a><span class="co">#&gt;   Seed:                 1</span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a><span class="co">#&gt;   Per-quantile tail-probability table:</span></span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a><span class="co">#&gt;     q=0.025  threshold=0.183  P_empirical=0.0250  P_mixture=0.0241  error=-0.0009</span></span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a><span class="co">#&gt;     q=0.050  threshold=0.2036  P_empirical=0.0500  P_mixture=0.0498  error=-0.0002</span></span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a><span class="co">#&gt;     q=0.100  threshold=0.2281  P_empirical=0.1000  P_mixture=0.0995  error=-0.0005</span></span>
+<span id="cb8-32"><a href="#cb8-32" tabindex="-1"></a><span class="co">#&gt;     q=0.500  threshold=0.3308  P_empirical=0.5000  P_mixture=0.4968  error=-0.0032</span></span>
+<span id="cb8-33"><a href="#cb8-33" tabindex="-1"></a><span class="co">#&gt;     q=0.900  threshold=0.4554  P_empirical=0.9000  P_mixture=0.8998  error=-0.0002</span></span>
+<span id="cb8-34"><a href="#cb8-34" tabindex="-1"></a><span class="co">#&gt;     q=0.950  threshold=0.4919  P_empirical=0.9500  P_mixture=0.9508  error=+0.0008</span></span>
+<span id="cb8-35"><a href="#cb8-35" tabindex="-1"></a><span class="co">#&gt;     q=0.975  threshold=0.5231  P_empirical=0.9750  P_mixture=0.9760  error=+0.0010</span></span>
+<span id="cb8-36"><a href="#cb8-36" tabindex="-1"></a></span>
+<span id="cb8-37"><a href="#cb8-37" tabindex="-1"></a>pri_nc <span class="ot">&lt;-</span> <span class="fu">set_prior</span>(</span>
+<span id="cb8-38"><a href="#cb8-38" tabindex="-1"></a>  <span class="at">endpoint =</span> <span class="st">&quot;binary&quot;</span>,</span>
+<span id="cb8-39"><a href="#cb8-39" tabindex="-1"></a>  <span class="at">arms     =</span> <span class="fu">list</span>(<span class="at">c =</span> pri_c_arm,</span>
+<span id="cb8-40"><a href="#cb8-40" tabindex="-1"></a>                  <span class="at">t =</span> <span class="fu">list</span>(<span class="at">family =</span> <span class="st">&quot;beta&quot;</span>, <span class="at">a =</span> <span class="dv">1</span>, <span class="at">b =</span> <span class="dv">1</span>))</span>
+<span id="cb8-41"><a href="#cb8-41" tabindex="-1"></a>)</span></code></pre></div>
+<p>The two caches are built exactly as before, only the prior is
+different.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>cache_nc_h0 <span class="ot">&lt;-</span> <span class="fu">build_cache</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  des, pri_nc,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">effect   =</span> <span class="fu">list</span>(<span class="at">theta_c =</span> <span class="fl">0.33</span>, <span class="at">theta_t =</span> <span class="fl">0.33</span>),</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">n_trials =</span> R_CACHE, <span class="at">cores =</span> <span class="dv">1</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">threshold_grid =</span> threshold_grid</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>cache_nc_h1 <span class="ot">&lt;-</span> <span class="fu">build_cache</span>(</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  des, pri_nc,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">effect   =</span> <span class="fu">list</span>(<span class="at">theta_c =</span> <span class="fl">0.33</span>, <span class="at">theta_t =</span> <span class="fl">0.28</span>),</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">n_trials =</span> R_CACHE, <span class="at">cores =</span> <span class="dv">1</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="at">threshold_grid =</span> threshold_grid</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>)</span></code></pre></div>
+<div id="a.-common-across-looks-calibration-1" class="section level2">
+<h2>2a. Common-across-looks calibration</h2>
+<p>Same <code>power_target = 0.80</code> as 1a, for the same reason: a
+single common threshold across 5 looks cannot reach as high a power at
+this type I error as a properly shaped (stage-specific) schedule
+can.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>cal_nc <span class="ot">&lt;-</span> <span class="fu">calibrate_design</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">cache         =</span> cache_nc_h0,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">cache_alt     =</span> cache_nc_h1,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">alpha_target  =</span> <span class="fl">0.025</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">power_target  =</span> <span class="fl">0.80</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="at">efficacy_grid =</span> <span class="fu">seq</span>(<span class="fl">0.95</span>, <span class="fl">0.999</span>, <span class="at">by =</span> <span class="fl">0.005</span>),</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">futility_grid =</span> <span class="fu">seq</span>(<span class="fl">0.80</span>, <span class="fl">0.95</span>,  <span class="at">by =</span> <span class="fl">0.05</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>)</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="fu">head</span>(cal_nc<span class="sc">$</span>grid)</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt;       p    q type_I  power      E_N</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt; 1 0.950 0.80 0.1302 0.9674 1513.616</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; 2 0.950 0.85 0.1302 0.9674 1521.976</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt; 3 0.950 0.90 0.1302 0.9674 1528.968</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="co">#&gt; 4 0.950 0.95 0.1302 0.9674 1533.376</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co">#&gt; 5 0.955 0.80 0.1200 0.9642 1558.456</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; 6 0.955 0.85 0.1200 0.9642 1566.816</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>cal_nc<span class="sc">$</span>best</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="co">#&gt; Calibrated design</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="co">#&gt;   Efficacy threshold (p):  0.9950</span></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="co">#&gt;   Futility threshold (q):  0.8000</span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="co">#&gt;   Type I error (H0):       0.0166</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="co">#&gt;   Power (H1):              0.8160</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="co">#&gt;   Expected sample size (H1): 2438.1</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="co">#&gt;   Note: Type I error and Power follow the calibration&#39;s futility</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt;         convention; under the default non-binding rule the efficacy</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt;         probability ignores futility crossings. See $oc_h0 / $oc_h1.</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt;   Full per-hypothesis operating characteristics: $oc_h0, $oc_h1</span></span></code></pre></div>
+</div>
+<div id="b.-stage-specific-calibration-1" class="section level2">
+<h2>2b. Stage-specific calibration</h2>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>oc_nc_stage_h0 <span class="ot">&lt;-</span> <span class="fu">evaluate_design</span>(cache_nc_h0, dec_stage)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>oc_nc_stage_h1 <span class="ot">&lt;-</span> <span class="fu">evaluate_design</span>(cache_nc_h1, dec_stage)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;Non-conjugate prior, stage-specific p_1:5 = (0.998, 0.998, 0.998, 0.998, 0.9775):</span><span class="sc">\n</span><span class="st">&quot;</span>))</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; Non-conjugate prior, stage-specific p_1:5 = (0.998, 0.998, 0.998, 0.998, 0.9775):</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;  Type I error rate  = %.2f%%</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="dv">100</span> <span class="sc">*</span> oc_nc_stage_h0<span class="sc">$</span>alpha))</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt;   Type I error rate  = 2.36%</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;  Power              = %.2f%%</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="dv">100</span> <span class="sc">*</span> oc_nc_stage_h1<span class="sc">$</span>alpha))</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt;   Power              = 90.96%</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;  E(N | H1)          = %.0f patients</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>            oc_nc_stage_h1<span class="sc">$</span>expected_sample_size))</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt;   E(N | H1)          = 2772 patients</span></span></code></pre></div>
+</div>
+</div>
+<div id="side-by-side-calibrated-designs" class="section level1">
+<h1>3. Side-by-side calibrated designs</h1>
+<p>The mixture prior is more informative than the flat <span class="math inline">\(\mathrm{Beta}(1, 1)\)</span> in the central
+region, so for the same stage-specific schedule the type I error rate
+and the power can shift modestly relative to the conjugate case.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="at">prior     =</span> <span class="fu">c</span>(<span class="st">&quot;Beta(1,1) flat&quot;</span>, <span class="st">&quot;logit-normal mixture&quot;</span>),</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">type_I_pp =</span> <span class="fu">c</span>(<span class="dv">100</span> <span class="sc">*</span> oc_conj_stage_h0<span class="sc">$</span>alpha, <span class="dv">100</span> <span class="sc">*</span> oc_nc_stage_h0<span class="sc">$</span>alpha),</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">power_pp  =</span> <span class="fu">c</span>(<span class="dv">100</span> <span class="sc">*</span> oc_conj_stage_h1<span class="sc">$</span>alpha, <span class="dv">100</span> <span class="sc">*</span> oc_nc_stage_h1<span class="sc">$</span>alpha),</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  <span class="at">E_N_H1    =</span> <span class="fu">c</span>(oc_conj_stage_h1<span class="sc">$</span>expected_sample_size,</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>                oc_nc_stage_h1<span class="sc">$</span>expected_sample_size)</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt;                  prior type_I_pp power_pp   E_N_H1</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; 1       Beta(1,1) flat      2.46    90.90 2767.160</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; 2 logit-normal mixture      2.36    90.96 2771.568</span></span></code></pre></div>
+</div>
+<div id="summary" class="section level1">
+<h1>Summary</h1>
+<p><code>build_cache()</code> runs the simulation pass exactly once per
+scenario. Whatever the prior — conjugate or a mixture-approximated
+non-conjugate — the calibration step is downstream of the cache and runs
+in milliseconds per candidate threshold combination. The workflow is the
+same in both prior scenarios; the only difference is the
+<code>adabay_prior</code> object passed to
+<code>build_cache()</code>.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

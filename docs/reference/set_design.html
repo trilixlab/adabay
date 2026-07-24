@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>set_design() &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="../articles/index.html">Articles</a></li>
+    <li><a href="../news/index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+
+<main>
+<div class="page-header">
+  <h1><code>set_design()</code></h1>
+  <p class="subtitle">Set the Bayesian group sequential design skeleton.</p>
+</div>
+
+<div class="section-label">Description</div>
+<p>Declares the endpoint type, look schedule and effect scale of a two-arm Bayesian group sequential design. Returns a
+<code>adabay_design</code> S3 object that is then consumed by <code>set_prior()</code>, <code>evaluate_design()</code> and
+<code>build_cache()</code>.</p>
+
+<div class="section-label">Usage</div>
+<pre><code><span class="code-function">set_design</span>(
+  endpoint,
+  n_per_look       = <span class="code-keyword">NULL</span>,
+  exposure_per_look = <span class="code-keyword">NULL</span>,
+  d_total          = <span class="code-keyword">NULL</span>,
+  d_per_look       = <span class="code-keyword">NULL</span>,
+  effect_scale     = <span class="code-keyword">NULL</span>,
+  alternative      = <span class="code-function">c</span>(<span class="code-string">"greater"</span>, <span class="code-string">"less"</span>),
+  delta_null       = <span class="code-keyword">NULL</span>,
+  sigma            = <span class="code-keyword">NULL</span>,
+  allocation_ratio = <span class="code-number">1</span>
+)</code></pre>
+
+<div class="section-label">Arguments</div>
+<dl class="args">
+  <dt>endpoint</dt><dd>One of <code>"continuous"</code>, <code>"binary"</code>, <code>"count"</code> or <code>"tte"</code> (time-to-event).</dd>
+  <dt>n_per_look</dt><dd>Cumulative sample size at each look, pooled across both arms (continuous and binary endpoints); the number of looks K is taken from its length. Split into per-arm targets by allocation_ratio.</dd>
+  <dt>exposure_per_look</dt><dd>Cumulative exposure at each look, pooled across both arms (count endpoint); split into per-arm targets by allocation_ratio.</dd>
+  <dt>d_total</dt><dd>Total target number of events (tte endpoint).</dd>
+  <dt>d_per_look</dt><dd>Cumulative number of events at each look (tte endpoint).</dd>
+  <dt>effect_scale</dt><dd>Effect-size parameterisation. Defaults are endpoint-specific: <code>"mean_difference"</code> (continuous),
+    <code>"risk_difference"</code> (binary), <code>"rate_difference"</code> (count), <code>"hazard_ratio"</code> (tte).</dd>
+  <dt>alternative</dt><dd><code>"greater"</code> for <em>H<sub>1</sub>: &Delta; &gt; &Delta;<sub>0</sub></em> or <code>"less"</code> for <em>H<sub>1</sub>: &Delta; &lt; &Delta;<sub>0</sub></em>.</dd>
+  <dt>delta_null</dt><dd>Null-hypothesis effect-size value &Delta;<sub>0</sub>.</dd>
+  <dt>sigma</dt><dd>Common within-arm SD for normal-known-variance continuous priors.</dd>
+  <dt>allocation_ratio</dt><dd>Treatment-to-control allocation ratio (default 1) that splits each pooled per-look value into per-arm targets.</dd>
+</dl>
+
+<div class="section-label">Value</div>
+<p>An object of class <code>"adabay_design"</code>.</p>
+
+<div class="section-label">Examples</div>
+<pre><code><span class="code-comment">## Five-look binary GSD on the risk-difference scale (ADRENAL re-design)</span>
+des &lt;- <span class="code-function">set_design</span>(
+  endpoint     = <span class="code-string">"binary"</span>,
+  n_per_look   = <span class="code-function">c</span>(<span class="code-number">760</span>, <span class="code-number">1520</span>, <span class="code-number">2280</span>, <span class="code-number">3040</span>, <span class="code-number">3800</span>),
+  effect_scale = <span class="code-string">"risk_difference"</span>,
+  alternative  = <span class="code-string">"less"</span>
+)
+<span class="code-function">print</span>(des)
+
+<span class="code-comment">## Five-look tte GSD on the log-hazard-ratio scale</span>
+des &lt;- <span class="code-function">set_design</span>(
+  endpoint     = <span class="code-string">"tte"</span>,
+  d_total      = <span class="code-number">508</span>,
+  d_per_look   = <span class="code-function">c</span>(<span class="code-number">102</span>, <span class="code-number">204</span>, <span class="code-number">305</span>, <span class="code-number">407</span>, <span class="code-number">508</span>),
+  effect_scale = <span class="code-string">"log_hazard_ratio"</span>,
+  alternative  = <span class="code-string">"less"</span>
+)</code></pre>
+
+<div class="section-label">See also</div>
+<ul>
+  <li><a href="set_prior.html"><code>set_prior()</code></a> for matched per-arm prior specification.</li>
+  <li><a href="set_decision.html"><code>set_decision()</code></a> for the decision rules.</li>
+  <li><a href="evaluate_design.html"><code>evaluate_design()</code></a> for running the simulation.</li>
+</ul>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>Related functions</h2>
+    <ul>
+      <li><a href="set_design.html"><code>set_design()</code></a></li>
+      <li><a href="set_prior.html"><code>set_prior()</code></a></li>
+      <li><a href="set_decision.html"><code>set_decision()</code></a></li>
+      <li><a href="set_accrual.html"><code>set_accrual()</code></a></li>
+      <li><a href="fit_mixture.html"><code>fit_mixture()</code></a></li>
+      <li><a href="evaluate_design.html"><code>evaluate_design()</code></a></li>
+      <li><a href="build_cache.html"><code>build_cache()</code></a></li>
+      <li><a href="calibrate_design.html"><code>calibrate_design()</code></a></li>
+      <li><a href="summarise_oc.html"><code>summarise_oc()</code></a></li>
+    </ul>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer"><p>Site built for <strong>adabay 0.1.0</strong>.</p></footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>

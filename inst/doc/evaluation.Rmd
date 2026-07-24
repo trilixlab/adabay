@@ -1,0 +1,201 @@
+---
+title: "Evaluating a Bayesian GSD: conjugate and non-conjugate priors"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Evaluating a Bayesian GSD: conjugate and non-conjugate priors}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 6,
+  fig.height = 4
+)
+set.seed(1L)
+```
+
+This vignette walks through the **evaluation** workflow of a Bayesian
+group sequential design: given a fixed design, prior and decision rule,
+estimate the operating characteristics by Monte Carlo simulation under a
+user-supplied data-generating effect. We work through two scenarios on the
+same binary ADRENAL re-design, differing only in the prior:
+
+1. **Conjugate prior** --- independent $\mathrm{Beta}(1, 1)$ priors on the
+   per-arm response rates. The posterior tail probability is evaluated
+   in closed form (beta convolution) at every look, with no quadrature.
+2. **Non-conjugate prior** --- a logit-normal prior on the control-arm
+   rate, approximated by a beta mixture via `fit_mixture()`. The
+   convolution argument still holds component-wise, so the per-look
+   tail-probability cost is unchanged.
+
+The shared design and decision rule are constructed once.
+
+```{r design, message = FALSE}
+library(adabay)
+
+des <- set_design(
+  endpoint     = "binary",
+  n_per_look   = c(760, 1520, 2280, 3040, 3800),
+  effect_scale = "risk_difference",
+  alternative  = "less"
+)
+
+dec <- set_decision(
+  efficacy = list(list(threshold_effect = 0, threshold_prob = 0.99)),
+  futility = list(list(threshold_effect = 0, threshold_prob = 0.90)),
+  futility_binding = FALSE
+)
+```
+
+Because `futility_binding = FALSE`, the futility boundary is **non-binding**:
+the reported Type I error rate (`$alpha`) is computed *as if the futility rule
+were ignored*, which is the regulatory convention, whereas the realized power
+under the actual trial conduct --- in which the trial does stop at a futility
+crossing --- is `$eff_prob`. The two coincide only under binding futility. We
+therefore read Type I error from `$alpha` and power from `$eff_prob` below.
+
+# 1. Conjugate prior
+
+The simplest case: independent $\mathrm{Beta}(1, 1)$ priors on the per-arm
+response rates.
+
+```{r conj-prior}
+pri_conj <- set_prior(
+  endpoint = "binary",
+  arms = list(c = list(family = "beta", a = 1, b = 1),
+              t = list(family = "beta", a = 1, b = 1))
+)
+pri_conj
+```
+
+We evaluate the operating characteristics under both the null
+($\theta_c = \theta_t = 0.33$) and the alternative ($\theta_c = 0.33$,
+$\theta_t = 0.28$), with `n_trials = 2000` for a fast vignette. Raising
+this to `n_trials = 1e6` recovers the manuscript precision.
+
+```{r conj-eval, message = FALSE}
+oc_conj_h0 <- evaluate_design(
+  des, pri_conj, dec,
+  effect   = list(theta_c = 0.33, theta_t = 0.33),
+  n_trials = 2000, cores = 1, seed = 1L
+)
+oc_conj_h1 <- evaluate_design(
+  des, pri_conj, dec,
+  effect   = list(theta_c = 0.33, theta_t = 0.28),
+  n_trials = 2000, cores = 1, seed = 1L
+)
+
+cat(sprintf("Conjugate Beta(1,1) prior:\n"))
+cat(sprintf("  Type I error rate  = %.2f%%\n", 100 * oc_conj_h0$alpha))
+cat(sprintf("  Power              = %.2f%%\n", 100 * oc_conj_h1$eff_prob))
+cat(sprintf("  E(N | H1)          = %.0f patients\n",
+            oc_conj_h1$expected_sample_size))
+```
+
+The per-look stopping probabilities and the fan plot show where the trial
+accumulates efficacy and futility mass.
+
+```{r conj-plot, fig.alt = "Per-look efficacy and futility stopping probabilities under H1 for the conjugate-prior design."}
+if (requireNamespace("ggplot2", quietly = TRUE)) plot(oc_conj_h1)
+```
+
+# 2. Non-conjugate prior approximated by a beta mixture
+
+Suppose the prior on the control-arm rate $\theta_c$ is summarised by a
+logit-normal with logit-scale mean $-0.7$ and standard deviation $0.4$,
+corresponding to a prior median near $0.33$ and modest spread. A
+logit-normal is not conjugate to the binomial, so we approximate it by a
+finite mixture of beta components via `fit_mixture()`. The treatment-arm
+prior remains $\mathrm{Beta}(1, 1)$.
+
+Because `prior` is supplied here as a density function rather than a
+vector of pre-drawn samples, `fit_mixture()` draws `n_samples` observations
+from it internally; passing `seed` makes that draw (and hence the fitted
+mixture) reproducible regardless of what randomness this session has
+already consumed, rather than depending on the ambient RNG state.
+
+```{r nonconj-prior, message = FALSE, warning = FALSE}
+logit_normal_density <- function(theta) {
+  meanlog <- -0.7
+  sdlog   <-  0.4
+  z <- log(theta / (1 - theta))
+  dnorm(z, meanlog, sdlog) / (theta * (1 - theta))
+}
+
+pri_c_arm <- fit_mixture(
+  endpoint         = "binary",
+  arm              = "c",
+  prior            = logit_normal_density,
+  n_components_max = 5L,
+  tol_kl           = 1e-3,
+  tol_tail         = 5e-3,
+  n_samples        = 10000L,
+  seed             = 1L
+)
+pri_c_arm
+
+pri_nc <- set_prior(
+  endpoint = "binary",
+  arms     = list(c = pri_c_arm,
+                  t = list(family = "beta", a = 1, b = 1))
+)
+```
+
+`fit_mixture()` reports per-quantile tail-probability errors and emits a
+runtime warning when the maximum absolute error exceeds `tol_tail`. The
+overlay plot below compares the empirical-sample density against the
+fitted mixture density, with vertical rugs at the tail-quantile grid.
+
+```{r nonconj-overlay, fig.alt = "Empirical logit-normal prior density overlaid on the fitted beta-mixture density, with tail-quantile rugs."}
+if (requireNamespace("ggplot2", quietly = TRUE)) plot(pri_c_arm)
+```
+
+The downstream evaluation is identical to the conjugate case --- there is
+no change in user-facing code beyond passing `pri_nc` instead of
+`pri_conj`.
+
+```{r nonconj-eval, message = FALSE}
+oc_nc_h0 <- evaluate_design(
+  des, pri_nc, dec,
+  effect   = list(theta_c = 0.33, theta_t = 0.33),
+  n_trials = 2000, cores = 1, seed = 1L
+)
+oc_nc_h1 <- evaluate_design(
+  des, pri_nc, dec,
+  effect   = list(theta_c = 0.33, theta_t = 0.28),
+  n_trials = 2000, cores = 1, seed = 1L
+)
+
+cat(sprintf("Non-conjugate (logit-normal) prior via beta mixture:\n"))
+cat(sprintf("  Type I error rate  = %.2f%%\n", 100 * oc_nc_h0$alpha))
+cat(sprintf("  Power              = %.2f%%\n", 100 * oc_nc_h1$eff_prob))
+cat(sprintf("  E(N | H1)          = %.0f patients\n",
+            oc_nc_h1$expected_sample_size))
+```
+
+# 3. Side-by-side comparison
+
+The mixture prior is more informative than the flat $\mathrm{Beta}(1, 1)$
+in the central region but matches it on the tails, so the operating
+characteristics are close but not identical at the same simulation budget.
+
+```{r compare}
+data.frame(
+  prior     = c("Beta(1,1) flat", "logit-normal mixture"),
+  type_I_pp = c(100 * oc_conj_h0$alpha, 100 * oc_nc_h0$alpha),
+  power_pp  = c(100 * oc_conj_h1$eff_prob, 100 * oc_nc_h1$eff_prob),
+  E_N_H1    = c(oc_conj_h1$expected_sample_size,
+                oc_nc_h1$expected_sample_size)
+)
+```
+
+# Summary
+
+`evaluate_design()` is the same call for the conjugate and the
+non-conjugate case; only the `adabay_prior` object differs. The mixture
+approximation enters the pipeline exactly once, when constructing the
+`adabay_prior_arm` object via `fit_mixture()`, after which every downstream
+entry point runs at full conjugate speed.

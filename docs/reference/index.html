@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Function reference &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="../articles/index.html">Articles</a></li>
+    <li><a href="../news/index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+
+<main>
+
+<h1>Function reference</h1>
+<p class="lead">All exported functions, S3 classes and methods in adabay 0.1.0.</p>
+
+<h2>Design specification</h2>
+<table class="ref-index">
+<tbody>
+  <tr><td><a href="set_design.html"><code>set_design()</code></a></td>   <td>Specify the design skeleton: endpoint, look schedule, effect scale.</td></tr>
+  <tr><td><a href="set_prior.html"><code>set_prior()</code></a></td>     <td>Specify per-arm priors (conjugate, or a mixture from <code>fit_mixture()</code>).</td></tr>
+  <tr><td><a href="set_decision.html"><code>set_decision()</code></a></td><td>Specify per-look efficacy and futility decision rules.</td></tr>
+  <tr><td><a href="set_accrual.html"><code>set_accrual()</code></a></td> <td>Specify recruitment, follow-up and dropout.</td></tr>
+  <tr><td><a href="fit_mixture.html"><code>fit_mixture()</code></a></td> <td>Approximate a non-conjugate prior by a conjugate mixture.</td></tr>
+</tbody>
+</table>
+
+<h2>Simulation and evaluation</h2>
+<table class="ref-index">
+<tbody>
+  <tr><td><a href="build_cache.html"><code>build_cache()</code></a></td>       <td>Cache per-look tail probabilities over a grid of look times and thresholds.</td></tr>
+  <tr><td><a href="evaluate_design.html"><code>evaluate_design()</code></a></td><td>Evaluate operating characteristics; polymorphic over <code>adabay_design</code> (fused simulate-and-aggregate path) and <code>adabay_cache</code> (cheap aggregation from a pre-built cache).</td></tr>
+  <tr><td><a href="calibrate_design.html"><code>calibrate_design()</code></a></td><td>Search a threshold grid for target operating characteristics.</td></tr>
+  <tr><td><a href="summarise_oc.html"><code>summarise_oc()</code></a></td>     <td>Tidy summary across one or more <code>adabay_oc</code> objects.</td></tr>
+</tbody>
+</table>
+
+<h2>S3 classes</h2>
+<table class="ref-index">
+<tbody>
+  <tr><td><code>adabay_design</code></td>     <td>Design specification returned by <code>set_design()</code>.</td></tr>
+  <tr><td><code>adabay_prior</code></td>      <td>Joint prior specification returned by <code>set_prior()</code>.</td></tr>
+  <tr><td><code>adabay_prior_arm</code></td>  <td>Per-arm mixture-of-conjugate prior returned by <code>fit_mixture()</code>.</td></tr>
+  <tr><td><code>adabay_decision</code></td>   <td>Decision-rule specification returned by <code>set_decision()</code>.</td></tr>
+  <tr><td><code>adabay_accrual</code></td>    <td>Accrual specification returned by <code>set_accrual()</code>.</td></tr>
+  <tr><td><code>adabay_cache</code></td>      <td>Cache of per-look tail probabilities returned by <code>build_cache()</code>.</td></tr>
+  <tr><td><code>adabay_oc</code></td>         <td>Operating characteristics returned by <code>evaluate_design()</code> and <code>calibrate_design()</code>.</td></tr>
+  <tr><td><code>adabay_calibration_best</code></td> <td>Selected calibrated design (chosen thresholds with type I and power) in the <code>$best</code> element returned by <code>calibrate_design()</code>.</td></tr>
+</tbody>
+</table>
+
+<h2>S3 methods</h2>
+<table class="ref-index">
+<tbody>
+  <tr><td><code>print()</code></td>   <td>Compact textual summary for every <code>adabay_*</code> class.</td></tr>
+  <tr><td><code>plot()</code></td>    <td>Stopping-probability fan plot for <code>adabay_oc</code>; density-overlay plot for <code>adabay_prior_arm</code>.</td></tr>
+  <tr><td><code>summary()</code></td> <td>Detailed numeric summary for <code>adabay_oc</code>.</td></tr>
+</tbody>
+</table>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>On this site</h2>
+    <ul>
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="index.html">Reference</a></li>
+      <li><a href="../articles/index.html">Articles</a></li>
+      <li><a href="../news/index.html">Changelog</a></li>
+    </ul>
+  </div>
+  <div class="sidebar-block">
+    <h2>Source</h2>
+    <p><a href="https://github.com/trilixlab/adabay/tree/main/R">R/ folder on GitHub</a></p>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer">
+  <p>Site built for <strong>adabay 0.1.0</strong>.</p>
+</footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>

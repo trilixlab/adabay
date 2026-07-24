@@ -1,0 +1,42 @@
+Package: adabay
+Type: Package
+Title: Rapid Evaluation and Calibration of Bayesian Group Sequential
+        Designs Across Common Endpoint Types
+Version: 0.1.0
+Date: 2026-07-07
+Authors@R: c(
+    person(given = "Zhangyi", family = "He",
+           email = "zhe1@georgeinstitute.org.uk",
+           role = "aut"),
+    person(given = "Feng", family = "Yu",
+           email = "feng.yu@bristol.ac.uk",
+           role = c("aut", "cre")))
+Description: Implements a semi-simulation framework for the rapid evaluation
+    and calibration of Bayesian group sequential designs (GSDs). Virtual
+    trials are simulated by Monte Carlo, and per-look posteriors are
+    computed in closed form by approximating any user-specified prior with a
+    finite mixture of conjugate components. Supports continuous (normal-
+    normal or normal-inverse-gamma updates), binary (beta-binomial), count
+    (gamma-Poisson) and time-to-event (gamma-exponential) primary endpoints,
+    posterior-probability decision rules with efficacy and binding or
+    non-binding futility stopping, and a precomputation strategy that
+    decouples threshold and look-time selection from the simulation pass.
+License: MIT + file LICENSE
+URL: https://github.com/trilixlab/adabay
+BugReports: https://github.com/trilixlab/adabay/issues
+Depends: R (>= 4.0.0)
+Imports: graphics, parallel, Rcpp (>= 1.0.7), stats
+LinkingTo: Rcpp
+Suggests: RBesT (>= 1.6), ggplot2, ggsci, testthat (>= 3.0.0), knitr,
+        rmarkdown
+Encoding: UTF-8
+Language: en-GB
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
+Roxygen: list(markdown = TRUE)
+NeedsCompilation: yes
+Packaged: 2026-07-18 22:46:34 UTC; jefferyhe
+Author: Zhangyi He [aut],
+  Feng Yu [aut, cre]
+Maintainer: Feng Yu <feng.yu@bristol.ac.uk>

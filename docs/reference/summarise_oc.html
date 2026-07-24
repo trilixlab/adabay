@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>summarise_oc() &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="../articles/index.html">Articles</a></li>
+    <li><a href="../news/index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+<main>
+
+<div class="page-header">
+  <h1><code>summarise_oc()</code></h1>
+  <p class="subtitle">Summarise operating characteristics in tidy form.</p>
+</div>
+
+<div class="section-label">Description</div>
+<p>Returns a tidy data frame summarising one or more <code>adabay_oc</code> objects. Convenient for comparing operating
+characteristics across designs in a grid, or across endpoints in a benchmark.</p>
+
+<div class="section-label">Usage</div>
+<pre><code><span class="code-function">summarise_oc</span>(x)</code></pre>
+
+<div class="section-label">Arguments</div>
+<dl class="args">
+  <dt>x</dt><dd>A <code>adabay_oc</code> object or a list of them. When a list is supplied, names are used as a label column.</dd>
+</dl>
+
+<div class="section-label">Value</div>
+<p>A <code>data.frame</code> with one row per input <code>adabay_oc</code> and columns covering: per-look stopping
+probabilities, overall type I error or power, expected sample size and (if accrual was supplied) expected calendar
+duration.</p>
+
+<div class="section-label">Examples</div>
+<pre><code><span class="code-comment">## Compare several designs in one tidy data frame</span>
+oc_5look &lt;- <span class="code-function">evaluate_design</span>(des_5, pri, dec, effect = eff_h1, n_trials = <span class="code-number">1e4</span>, seed = <span class="code-number">1L</span>)
+oc_3look &lt;- <span class="code-function">evaluate_design</span>(des_3, pri, dec, effect = eff_h1, n_trials = <span class="code-number">1e4</span>, seed = <span class="code-number">1L</span>)
+
+tab &lt;- <span class="code-function">summarise_oc</span>(<span class="code-function">list</span>(five_look = oc_5look, three_look = oc_3look))
+<span class="code-function">print</span>(tab)</code></pre>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>Related functions</h2>
+    <ul>
+      <li><a href="set_design.html"><code>set_design()</code></a></li>
+      <li><a href="set_prior.html"><code>set_prior()</code></a></li>
+      <li><a href="set_decision.html"><code>set_decision()</code></a></li>
+      <li><a href="set_accrual.html"><code>set_accrual()</code></a></li>
+      <li><a href="fit_mixture.html"><code>fit_mixture()</code></a></li>
+      <li><a href="evaluate_design.html"><code>evaluate_design()</code></a></li>
+      <li><a href="build_cache.html"><code>build_cache()</code></a></li>
+      <li><a href="calibrate_design.html"><code>calibrate_design()</code></a></li>
+      <li><a href="summarise_oc.html"><code>summarise_oc()</code></a></li>
+    </ul>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer"><p>Site built for <strong>adabay 0.1.0</strong>.</p></footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>

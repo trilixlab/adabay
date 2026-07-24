@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="../articles/index.html">Articles</a></li>
+    <li><a href="index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+<main>
+
+<h1>Changelog</h1>
+<p class="lead">Release notes for <strong>adabay</strong>.</p>
+
+<h2>adabay 0.1.0 <span class="badge badge-version">2026-07-07</span></h2>
+
+<p>Initial public release accompanying the manuscript &ldquo;<em>adabay: an R package for rapid evaluation and
+calibration of Bayesian group sequential designs across common endpoint types</em>&rdquo;.</p>
+
+<h3>Public API</h3>
+<ul>
+  <li><strong>Four endpoint families</strong>: continuous (normal&ndash;normal or normal&ndash;inverse-gamma), binary
+    (beta&ndash;binomial), count (gamma&ndash;Poisson) and time-to-event (gamma&ndash;exponential).</li>
+  <li><strong>Constructors</strong>: <code>set_design()</code>, <code>set_prior()</code>, <code>set_decision()</code>,
+    <code>set_accrual()</code>.</li>
+  <li><strong>Non-conjugate prior workflow</strong>: <code>fit_mixture()</code> approximates a user-specified prior by
+    a finite mixture of conjugate components with per-quantile tail-probability diagnostics; returns a
+    <code>adabay_prior_arm</code> object that plugs into <code>set_prior()</code> via its <code>arms</code> argument.</li>
+  <li><strong>Entry points</strong>: <code>evaluate_design()</code> is the single polymorphic entry point for
+    obtaining operating characteristics. Passing a <code>adabay_design</code> runs the fused simulate-and-aggregate
+    path for a one-off single-design evaluation; passing a <code>adabay_cache</code> (built once by
+    <code>build_cache()</code>) aggregates pre-computed per-look tail probabilities cheaply.
+    <code>calibrate_design()</code> sweeps a threshold grid against the cached path for the caching API of
+    Section 6 of the manuscript; <code>summarise_oc()</code> tidies the results across designs.</li>
+  <li><strong>Methods</strong>: <code>print()</code> and <code>summary()</code> for <code>adabay_oc</code>;
+    <code>plot()</code> for <code>adabay_oc</code> (per-look stopping-probability fan plot) and <code>adabay_prior_arm</code>
+    (density overlay with tail-quantile rugs).</li>
+</ul>
+
+<h3>Implementation</h3>
+<ul>
+  <li><strong>Semi-simulation core</strong> in C++ via <code>Rcpp</code> with a 64-node Gauss&ndash;Legendre quadrature
+    for the per-look posterior of &Delta;.</li>
+  <li><strong>Parallel execution</strong> via <code>parallel::mclapply</code> on POSIX and
+    <code>parallel::parLapply</code> on Windows, with the L'Ecuyer combined multiple-recursive generator for per-worker
+    streams.</li>
+  <li><strong>Within-<code>cores</code> bit-identical reproducibility</strong> at any fixed
+    <code>(seed, cores)</code> pair, and <strong>cross-<code>cores</code> bit-identical reproducibility</strong>
+    via the <code>cross_core_reproducible = TRUE</code> argument on <code>evaluate_design()</code> and
+    <code>build_cache()</code>, which forces the simulator pass to run in a single driver process irrespective of
+    <code>cores</code>. Default <code>FALSE</code> preserves the parallel simulator path; set <code>TRUE</code> for
+    regulatory submissions or other settings where reproducibility across hardware configurations is required.</li>
+</ul>
+
+<h3>Performance</h3>
+<p>Benchmarked against BATSS and adaptr at matched <em>R</em>&nbsp;=&nbsp;10,000 simulation budgets on the binary ADRENAL
+re-design (Section 7.4 of the manuscript): per-virtual-trial speedups of approximately 31&times; versus adaptr (between one
+and two orders of magnitude) and 1.6&thinsp;&times;&thinsp;10<sup>4</sup>&thinsp;&times; versus BATSS (four orders of
+magnitude) on the binary case, with all three packages running on 8 cores at the matched budget. At <em>R</em>&nbsp;=&nbsp;10<sup>6</sup>, adabay completes the paired scenarios in roughly
+6&ndash;169 seconds on 8 cores across the four endpoints, with Monte Carlo standard errors of 0.02&ndash;0.04 percentage
+points on the type I error rate and the power.</p>
+
+<h3>Documentation and scripts</h3>
+<ul>
+  <li><strong>Three knitr vignettes</strong>: <code>overview</code> (guided tour of the API),
+    <code>evaluation</code> (conjugate and non-conjugate prior workflows) and <code>calibration</code>
+    (end-to-end threshold calibration over a cache).</li>
+  <li><strong>Four reproducible case-study scripts</strong> in <code>inst/examples/</code> reproducing Section 5 of the
+    manuscript:
+    <ul>
+      <li><code>transform2.R</code> &mdash; TRANSFORM-2 esketamine trial (continuous).</li>
+      <li><code>adrenal.R</code> &mdash; ADRENAL re-design (binary).</li>
+      <li><code>bnt162b2.R</code> &mdash; Pfizer&ndash;BioNTech BNT162b2 vaccine trial (count).</li>
+      <li><code>checkmate141.R</code> &mdash; CheckMate-141 HNSCC trial (time-to-event).</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>Dependencies</h3>
+<ul>
+  <li>Depends on R&nbsp;&ge;&nbsp;4.0.</li>
+  <li>Imports <code>Rcpp</code> (&ge;&nbsp;1.0.7), <code>parallel</code>, <code>stats</code> and <code>graphics</code>.</li>
+  <li>Suggests <code>RBesT</code>, <code>ggplot2</code>, <code>ggsci</code>, <code>testthat</code>, <code>knitr</code>
+    and <code>rmarkdown</code>.</li>
+</ul>
+
+<h3>Known limitations</h3>
+<ul>
+  <li>Two-arm fixed-allocation designs only. Response-adaptive randomisation, sample-size re-estimation, covariate
+    adjustment, multi-arm and platform designs, and arm-dropping are not implemented in this release.</li>
+  <li>The exponential survival model assumes a constant hazard within arms.</li>
+  <li>Forward-KL mixture fitting is mass-covering; tail accuracy must be checked using the diagnostics returned by
+    <code>fit_mixture()</code>.</li>
+</ul>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>Versions</h2>
+    <ul>
+      <li><strong>0.1.0</strong> (2026-07-07) &mdash; initial release</li>
+    </ul>
+  </div>
+  <div class="sidebar-block">
+    <h2>Roadmap</h2>
+    <ul>
+      <li>Response-adaptive randomisation</li>
+      <li>Sample-size re-estimation</li>
+      <li>Covariate adjustment</li>
+      <li>Multi-arm and platform designs</li>
+      <li>Shiny interactive interface for cached calibration</li>
+    </ul>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer"><p>Site built for <strong>adabay 0.1.0</strong>.</p></footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>

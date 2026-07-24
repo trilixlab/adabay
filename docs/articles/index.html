@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Articles &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="index.html">Articles</a></li>
+    <li><a href="../news/index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+<main>
+
+<h1>Articles</h1>
+<p class="lead">Worked case studies and longer-form tutorials. The four case studies below mirror the four endpoint
+types covered by adabay and are each based on a published phase III trial. The full scripts are shipped in
+<code>inst/examples/</code> of the package.</p>
+
+<h2>Case studies (one per endpoint type)</h2>
+
+<div class="card-grid">
+
+  <a href="transform2.html" class="card">
+    <span class="endpoint-tag">Continuous</span>
+    <h3>TRANSFORM-2 esketamine trial</h3>
+    <p>Five-look Bayesian GSD on the MADRS mean-difference scale; benchmarks against gsbDesign, BATSS and adaptr
+       (Section 5.1 of the manuscript).</p>
+  </a>
+
+  <a href="adrenal.html" class="card">
+    <span class="endpoint-tag">Binary</span>
+    <h3>ADRENAL re-design</h3>
+    <p>Hydrocortisone vs placebo in septic shock; 90-day mortality endpoint;
+       benchmarked against BATSS and adaptr at matched <em>R</em>&nbsp;=&nbsp;10,000 (Section 5.2).</p>
+  </a>
+
+  <a href="bnt162b2.html" class="card">
+    <span class="endpoint-tag">Count</span>
+    <h3>BNT162b2 vaccine trial</h3>
+    <p>Pfizer&ndash;BioNTech COVID-19 mRNA vaccine; cumulative case counts under a gamma&ndash;Poisson model on the
+       log-rate-ratio scale (Section 5.3).</p>
+  </a>
+
+  <a href="checkmate141.html" class="card">
+    <span class="endpoint-tag">Time-to-event</span>
+    <h3>CheckMate-141 HNSCC trial</h3>
+    <p>Nivolumab vs chemotherapy in recurrent or metastatic head and neck cancer; event-driven five-look design with
+       Poisson recruitment (Section 5.4).</p>
+  </a>
+
+</div>
+
+<h2>Vignettes</h2>
+<p>Longer-form vignettes shipped with the package source under <code>vignettes/</code>:</p>
+<ul>
+  <li><strong>overview.</strong> A guided tour of the design specification, simulation entry point, and S3 methods
+      using the ADRENAL re-design.</li>
+  <li><strong>evaluation.</strong> Evaluating a Bayesian GSD with conjugate and non-conjugate priors, including the
+      <code>fit_mixture()</code> tail-probability diagnostics.</li>
+  <li><strong>calibration.</strong> End-to-end threshold calibration from <code>build_cache()</code> through
+      <code>calibrate_design()</code>, recovering the calibrated three- and five-look ADRENAL designs of the
+      methodology paper.</li>
+</ul>
+
+<p class="muted">Built with <code>knitr</code>. View locally with <code>vignette(package = "adabay")</code> after installing the package.</p>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>On this site</h2>
+    <ul>
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../reference/index.html">Reference</a></li>
+      <li><a href="index.html">Articles</a></li>
+      <li><a href="../news/index.html">Changelog</a></li>
+    </ul>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer"><p>Site built for <strong>adabay 0.1.0</strong>.</p></footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>

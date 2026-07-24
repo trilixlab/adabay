@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CheckMate-141 (time-to-event endpoint) &mdash; adabay</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">
+    <img src="../assets/logo.png" alt="adabay logo">
+    <span>adabay</span>
+    <span class="navbar-version">0.1.0</span>
+  </a>
+  <ul class="navbar-nav">
+    <li><a href="../reference/index.html">Reference</a></li>
+    <li><a href="index.html">Articles</a></li>
+    <li><a href="../news/index.html">Changelog</a></li>
+    <li><a href="../authors.html">Authors</a></li>
+  </ul>
+  <div class="navbar-right">
+    <div class="search-box">
+      <input type="search" placeholder="Search the site…" aria-label="Search" autocomplete="off" data-base="..">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <a class="github-link" href="https://github.com/trilixlab/adabay" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+<div class="page-layout">
+<main>
+
+<div class="page-header">
+  <h1>CheckMate-141 HNSCC trial (time-to-event endpoint)</h1>
+  <p class="subtitle">Event-driven five-look Bayesian GSD on the log-hazard-ratio scale, with Poisson recruitment. Section 5.4 of the manuscript.</p>
+</div>
+
+<h2>Setting</h2>
+<p>CheckMate-141 (Ferris et&nbsp;al., <em>NEJM</em> 2016;375:1856&ndash;1867) was an open-label phase III randomised trial
+of nivolumab versus investigator's choice of single-agent chemotherapy (methotrexate, docetaxel or cetuximab) in adults
+with recurrent or metastatic squamous-cell carcinoma of the head and neck (HNSCC) whose disease had progressed within
+six months after platinum-based chemotherapy. The primary endpoint was overall survival. The trial randomised 361
+patients in a 2:1 allocation, accrued 218 deaths at the planned interim analysis and was stopped early for benefit, with
+median overall survival 7.5 months for nivolumab versus 5.1 months for chemotherapy and a hazard ratio of
+&Delta;<sup>*</sup>&nbsp;=&nbsp;&lambda;<sub>t</sub>&thinsp;/&thinsp;&lambda;<sub>c</sub>&nbsp;=&nbsp;0.70 (97.73% CI
+0.51&ndash;0.96).</p>
+
+<p>We re-implement CheckMate-141 as a five-look event-driven Bayesian GSD (<em>K</em>&nbsp;=&nbsp;5) under a 1:1
+allocation (a simplifying assumption for design-stage exposition, with the actual 2:1 randomisation accommodated by
+setting <code>allocation_ratio = 2</code> in <code>set_design()</code>), with looks at cumulative events
+<em>D<sub>k</sub></em>&nbsp;=&nbsp;50, 100, 150, 200, 250, hazards
+&lambda;<sub>c</sub>&nbsp;=&nbsp;log&nbsp;2&thinsp;/&thinsp;5.1&nbsp;=&nbsp;0.1359 and
+&lambda;<sub>t</sub>&nbsp;=&nbsp;log&nbsp;2&thinsp;/&thinsp;7.5&nbsp;=&nbsp;0.0924 events per month under
+<em>H<sub>1</sub></em>, weakly informative &lambda;<sub>a</sub>&nbsp;~&nbsp;Gamma(1, 1) priors on the per-arm hazard
+rates, a single-criterion efficacy rule
+&Pscr;(log&nbsp;&Delta;&nbsp;&lt;&nbsp;0&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.99
+on the log-hazard-ratio scale and a futility rule
+&Pscr;(log&nbsp;&Delta;&nbsp;&gt;&nbsp;0&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.90. Recruitment is modelled as a
+homogeneous Poisson process with rate <em>r</em>&nbsp;=&nbsp;12.8 patients per month per arm, consistent with the
+CheckMate-141 enrolment timeline.</p>
+
+<h2>adabay call sequence</h2>
+<pre><code><span class="code-keyword">library</span>(adabay)
+
+des &lt;- <span class="code-function">set_design</span>(endpoint     = <span class="code-string">"tte"</span>,
+                  d_total      = <span class="code-number">250</span>,
+                  d_per_look   = <span class="code-function">c</span>(<span class="code-number">50</span>, <span class="code-number">100</span>, <span class="code-number">150</span>, <span class="code-number">200</span>, <span class="code-number">250</span>),
+                  effect_scale = <span class="code-string">"log_hazard_ratio"</span>,
+                  alternative  = <span class="code-string">"less"</span>)
+
+pri &lt;- <span class="code-function">set_prior</span>(endpoint = <span class="code-string">"tte"</span>,
+                 arms = <span class="code-function">list</span>(c = <span class="code-function">list</span>(family = <span class="code-string">"gamma"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>),
+                             t = <span class="code-function">list</span>(family = <span class="code-string">"gamma"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>)))
+
+dec &lt;- <span class="code-function">set_decision</span>(
+  efficacy = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.99</span>)),
+  futility = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.90</span>)),
+  futility_binding = <span class="code-keyword">TRUE</span>)
+
+acc &lt;- <span class="code-function">set_accrual</span>(model = <span class="code-string">"poisson"</span>, rate = <span class="code-number">25.6</span>)
+
+oc_h0 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
+                         effect  = <span class="code-function">list</span>(lambda_c = <span class="code-function">log</span>(<span class="code-number">2</span>) / <span class="code-number">5.1</span>,
+                                        lambda_t = <span class="code-function">log</span>(<span class="code-number">2</span>) / <span class="code-number">5.1</span>),
+                         accrual = acc,
+                         n_trials = <span class="code-number">1e6</span>, cores = <span class="code-number">8</span>, seed = <span class="code-number">1L</span>)
+oc_h1 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
+                         effect  = <span class="code-function">list</span>(lambda_c = <span class="code-function">log</span>(<span class="code-number">2</span>) / <span class="code-number">5.1</span>,
+                                        lambda_t = <span class="code-function">log</span>(<span class="code-number">2</span>) / <span class="code-number">7.5</span>),
+                         accrual = acc,
+                         n_trials = <span class="code-number">1e6</span>, cores = <span class="code-number">8</span>, seed = <span class="code-number">1L</span>)</code></pre>
+
+<h2>Operating characteristics</h2>
+<p>At <em>R</em>&nbsp;=&nbsp;10<sup>6</sup> virtual trials per scenario the re-design reaches a type I error rate of
+3.10% and a power of 80.59%, with an expected number of events of 159 at trial stop under <em>H<sub>1</sub></em>
+(versus the fixed-sample target of 250) and an expected calendar duration of 12.78 months from randomisation of the
+first subject to the analysis at which the trial stops.</p>
+
+<table>
+<thead>
+<tr><th>Method</th><th>Trials</th><th>Type I (MC SE)</th><th>Power (MC SE)</th><th>E(D | H<sub>1</sub>)</th><th>E(T | H<sub>1</sub>)</th><th>Time (s)</th></tr>
+</thead>
+<tbody>
+<tr><td>adabay</td> <td>1,000,000</td> <td>3.10 (0.02)</td><td>80.59 (0.04)</td><td>159</td><td>12.78</td><td>93.0</td></tr>
+<tr><td>adabay</td> <td>10,000</td>    <td>3.29 (0.18)</td><td>80.56 (0.40)</td><td>158</td><td>12.73</td><td>0.8</td></tr>
+<tr><td>BATSS</td>  <td>n/a</td>       <td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td></tr>
+<tr><td>adaptr</td> <td>n/a</td>       <td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td></tr>
+<tr><td>gsbDesign</td> <td>n/a</td>     <td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td></tr>
+</tbody>
+</table>
+
+<p class="muted">adabay runs on 8 CPU cores via <code>mclapply</code> with the L'Ecuyer combined multiple-recursive generator
+(<code>cores = 8</code>). &ldquo;n/a&rdquo; indicates that no faithful comparator is constructible for the time-to-event
+endpoint: BATSS's sole model interface <code>batss.glm</code> is GLM-only and cannot construct the censored event-time
+response an INLA survival likelihood requires (with the event-driven look schedule a further obstacle); adaptr covers only
+continuous and binary outcomes; and gsbDesign is restricted to the normal&ndash;normal continuous setting. Type I error
+is evaluated at &lambda;<sub>t</sub>&thinsp;/&thinsp;&lambda;<sub>c</sub>&nbsp;=&nbsp;1 (equal median overall survival of
+5.1 months in both arms) and power at &lambda;<sub>t</sub>&thinsp;/&thinsp;&lambda;<sub>c</sub>&nbsp;=&nbsp;0.68 (control
+median 5.1 months versus treatment median 7.5 months, the CheckMate-141 hazard-ratio target). E(T&nbsp;|&nbsp;H<sub>1</sub>)
+is the expected calendar duration from randomisation of the first subject to the analysis at which the trial stops, in
+months, obtained as the direct Monte Carlo mean, across the simulated trials, of the realised stopping-look calendar time under Poisson recruitment.</p>
+
+<h2>What this exercises</h2>
+<ul>
+  <li>The gamma&ndash;exponential conjugate update on the log-hazard-ratio scale; closed-form posterior tail probability
+      via a beta CDF.</li>
+  <li>Event-driven look schedules via <code>d_per_look</code> in <code>set_design()</code>.</li>
+  <li>Homogeneous Poisson recruitment via <code>set_accrual()</code>, with the expected calendar duration obtained as
+      the direct Monte Carlo mean of the realised stopping-look calendar time.</li>
+</ul>
+
+<div class="note note-info">
+  <strong>Reproduce.</strong> The full script is shipped with the package as <code>inst/examples/checkmate141.R</code>.
+</div>
+
+</main>
+
+<aside class="sidebar">
+  <div class="sidebar-block">
+    <h2>Articles</h2>
+    <ul>
+      <li><a href="transform2.html">TRANSFORM-2 (continuous)</a></li>
+      <li><a href="adrenal.html">ADRENAL (binary)</a></li>
+      <li><a href="bnt162b2.html">BNT162b2 (count)</a></li>
+      <li><a href="checkmate141.html">CheckMate-141 (time-to-event)</a></li>
+    </ul>
+  </div>
+  <div class="sidebar-block">
+    <h2>Source</h2>
+    <p><a href="https://github.com/trilixlab/adabay/blob/main/inst/examples/checkmate141.R"><code>inst/examples/checkmate141.R</code></a></p>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="footer"><p>Site built for <strong>adabay 0.1.0</strong>.</p></footer>
+<script src="../assets/search.js" defer></script>
+</body>
+</html>
