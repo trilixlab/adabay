@@ -83,7 +83,13 @@
 <pre><code><span class="code-comment"># install.packages("devtools")</span>
 devtools::<span class="code-function">install_github</span>(<span class="code-string">"trilixlab/adabay"</span>)</code></pre>
 
-<p>Or install locally from the source tarball:</p>
+<p>Or install the release tarball directly from GitHub — no manual download needed:</p>
+<pre><code><span class="code-function">install.packages</span>(
+  <span class="code-string">"https://github.com/trilixlab/adabay/releases/download/v0.1.0/adabay_0.1.0.tar.gz"</span>,
+  repos = <span class="code-function">NULL</span>, type = <span class="code-string">"source"</span>
+)</code></pre>
+
+<p>Or download the tarball from the <a href="https://github.com/trilixlab/adabay/releases/tag/v0.1.0">Releases page</a> and install it locally:</p>
 <pre><code>devtools::<span class="code-function">install_local</span>(<span class="code-string">"adabay_0.1.0.tar.gz"</span>)</code></pre>
 
 <p>
