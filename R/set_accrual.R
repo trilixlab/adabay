@@ -1,8 +1,12 @@
 #' Set accrual: recruitment, follow-up and dropout
 #'
-#' Configures the recruitment process, the per-patient follow-up duration and
-#' the dropout process used to compute the expected study duration alongside
-#' the operating characteristics.
+#' Configures the recruitment process and the per-patient follow-up duration
+#' used to compute the expected study duration alongside the operating
+#' characteristics. The follow-up term enters the reported duration for the
+#' sample-size-driven continuous and binary schedules only; the exposure-driven
+#' count schedule and the event-driven time-to-event schedule do not add it. `dropout` and `dropout_rate` are accepted and stored for
+#' forward compatibility but are not consumed by any simulator or reported
+#' quantity in this release.
 #'
 #' @param model Recruitment model. One of:
 #'   \describe{
@@ -13,6 +17,10 @@
 #'     \item{\code{"callback"}}{user-supplied callback that returns
 #'           recruitment times for a given target sample size.}
 #'   }
+#'   Only \code{"poisson"} affects the reported expected duration: the other
+#'   models are accepted for specification, but `expected_duration` is
+#'   returned as `NA` for them, and time-to-event designs require
+#'   \code{"poisson"} outright.
 #' @param rate Recruitment rate, pooled across both arms (matching
 #'   \code{n_per_look}/\code{exposure_per_look}/\code{d_per_look} in
 #'   \code{\link{set_design}}, which are likewise pooled). Split into
@@ -24,9 +32,9 @@
 #'   with \code{model = "piecewise"}).
 #' @param callback Function with signature \code{function(n, ...)} returning
 #'   recruitment times (only used with \code{model = "callback"}).
-#' @param follow_up Per-patient follow-up duration. Either a single
-#'   non-negative numeric or a function with signature
-#'   \code{function(n, ...)} returning a vector of follow-up times.
+#' @param follow_up Per-patient follow-up duration: a single non-negative
+#'   numeric. A function-valued `follow_up` is not supported in this release
+#'   and is rejected with an informative error.
 #' @param dropout Dropout model. One of \code{"none"} (the default,
 #'   administrative censoring at the look times) or \code{"exponential"}
 #'   with rate \code{dropout_rate}.
@@ -67,8 +75,9 @@ set_accrual <- function(model = c("poisson", "piecewise", "callback"),
   if (is.numeric(follow_up)) {
     .assert_numeric(follow_up, len = 1L)
     if (follow_up < 0) stop("'follow_up' must be non-negative.", call. = FALSE)
-  } else if (!is.function(follow_up)) {
-    stop("'follow_up' must be a non-negative numeric scalar or a function.",
+  } else {
+    stop("'follow_up' must be a non-negative numeric scalar. ",
+         "Function-valued 'follow_up' is not supported in this release.",
          call. = FALSE)
   }
   if (dropout == "exponential") {

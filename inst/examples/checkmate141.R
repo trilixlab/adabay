@@ -7,8 +7,9 @@
 ##
 ## n_trials = 1e6 (the high-precision manuscript budget) with cores = 8
 ## (the manuscript reference workstation has eight logical threads) so the
-## example reproduces the values in Tables M.7.4 and S.3.4 of the
-## manuscript. The run takes a couple of minutes on the reference workstation.
+## example reproduces the values in Table 7 of the manuscript and
+## Table S5 of the supplement. The run takes a couple of minutes on the
+## reference workstation.
 ## Time-to-event (tte) designs are always staggered: an accrual specification is
 ## mandatory, because the Poisson arrival times drive the calendar-time
 ## exposure cutoff (see set_accrual() below).

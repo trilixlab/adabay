@@ -68,14 +68,14 @@ rules are expressible in the same syntax. Binding and non-binding futility are b
 
 <div class="section-label">Decision rule</div>
 <p>At the <em>k</em>-th look the trial stops for efficacy if all <em>U<sub>k</sub></em> efficacy criteria are simultaneously met,
-&Pscr;(&Delta; &gt; e<sub>k,u</sub> | &Dscr;<sub>k</sub>) &gt; p<sub>k,u</sub> for every <em>u</em>, and for futility if all
-<em>V<sub>k</sub></em> futility criteria are simultaneously met, &Pscr;(&Delta; &lt; f<sub>k,v</sub> | &Dscr;<sub>k</sub>) &gt; q<sub>k,v</sub>
+&Popf;(&Delta; &gt; e<sub>k,u</sub> | &Dscr;<sub>k</sub>) &gt; p<sub>k,u</sub> for every <em>u</em>, and for futility if all
+<em>V<sub>k</sub></em> futility criteria are simultaneously met, &Popf;(&Delta; &lt; f<sub>k,v</sub> | &Dscr;<sub>k</sub>) &gt; q<sub>k,v</sub>
 for every <em>v</em>. The inequality direction is determined by the <code>alternative</code> argument
 of <a href="set_design.html"><code>set_design()</code></a>: the formulas above are for the default
 <code>alternative = "greater"</code>; with <code>alternative = "less"</code> (as in the four
 case-study articles), both the efficacy and futility inequalities mirror to
-&Pscr;(&Delta; &lt; e<sub>k,u</sub> | &Dscr;<sub>k</sub>) &gt; p<sub>k,u</sub> and
-&Pscr;(&Delta; &gt; f<sub>k,v</sub> | &Dscr;<sub>k</sub>) &gt; q<sub>k,v</sub>.</p>
+&Popf;(&Delta; &lt; e<sub>k,u</sub> | &Dscr;<sub>k</sub>) &gt; p<sub>k,u</sub> and
+&Popf;(&Delta; &gt; f<sub>k,v</sub> | &Dscr;<sub>k</sub>) &gt; q<sub>k,v</sub>.</p>
 
 <div class="section-label">Examples</div>
 <pre><code><span class="code-comment">## Single-criterion efficacy and futility, common across looks</span>

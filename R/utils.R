@@ -27,13 +27,6 @@
 )
 
 ## Default conjugate kernel for each endpoint.
-.adabay_kernels <- list(
-  continuous = c("normal", "normal_inverse_gamma"),
-  binary     = "beta",
-  count      = "gamma",
-  tte        = "gamma"
-)
-
 ## Effect scales whose posterior tail probability is evaluated by fixed-node
 ## Gauss-Legendre quadrature rather than a closed-form CDF. On these scales the
 ## quadrature loses accuracy when a posterior shape parameter falls below 1,

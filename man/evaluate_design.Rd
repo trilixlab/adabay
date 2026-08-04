@@ -36,9 +36,12 @@ evaluate_design(x, ...)
 
 \item{decision}{A \code{adabay_decision} from \code{\link[=set_decision]{set_decision()}}.}
 
-\item{effect}{For the fused path only: named list of data-generating
-values; see the worked examples in the package vignettes for endpoint-
-specific names.}
+\item{effect}{For the fused path only: named list of per-arm
+data-generating values, named \code{mu_c}/\code{mu_t} for continuous,
+\code{theta_c}/\code{theta_t} (or \code{p_c}/\code{p_t}) for binary,
+and \code{lambda_c}/\code{lambda_t} for count and time-to-event. The
+generic aliases \code{psi_c}/\code{psi_t} are accepted for every
+endpoint.}
 
 \item{accrual}{For the fused path only: a \code{\link[=set_accrual]{set_accrual()}} specification.
 \strong{Required} for tte designs, which are always staggered: the
@@ -96,12 +99,14 @@ For tte this is the exact Monte Carlo mean of the calendar
 time realised (during simulation) at each trial's own stopping
 look; for continuous, binary and count -- which have no simulated
 recruitment timeline -- it is an analytic approximation.}
-\item{\code{tau}, \code{C}}{Per-trial stopping look and trial outcome code
-(\code{+1}/\code{-1}/\code{0} for efficacy/futility/no-cross).}
+\item{\code{tau}, \code{C}}{Per-trial stopping look and trial outcome code:
+\code{+1} for an efficacy stop and \code{-1} for a futility stop or for
+reaching the final look without efficacy. The final analysis always
+forces a decision, so every trial ends at \code{+1} or \code{-1}.}
 \item{\code{n_trials}, \code{effect}, \code{design}, \code{decision}}{Echoes of the inputs
 for downstream reproducibility. The fused path additionally records
-\code{seed}, \code{call} and (when supplied) \code{accrual}; these are omitted on
-the cached path.}
+\code{seed} and \code{call}, which are omitted on the cached path, and
+\code{accrual}, which is carried whenever the cache was built with one.}
 }
 }
 \description{
@@ -113,7 +118,10 @@ polymorphic in its first argument:
 \describe{
 \item{\code{adabay_design}}{Fused path: simulates \code{n_trials} virtual trials at
 the supplied data-generating values, computes per-look posterior tail
-probabilities of \eqn{\Delta} in closed form, and applies the supplied
+probabilities of \eqn{\Delta} (in closed form, or by fixed-node
+Gauss--Legendre quadrature on the binary and count rate-difference
+scales and by \code{stats::integrate()} on the continuous
+normal--inverse-gamma path), and applies the supplied
 decision rule to obtain the per-look stopping probabilities, the
 overall type I error rate (or power under the alternative), and the
 expected sample size, all in one call. Use this for one-off evaluation
@@ -126,9 +134,12 @@ share the same simulated trials.}
 }
 
 Slow inner integrals are dispatched to C++ implementations via
-\pkg{Rcpp}; the trial-level loop is embarrassingly parallel and is
-parallelised across \code{cores} workers via \code{\link[parallel:mclapply]{parallel::mclapply()}} (POSIX) or
-\code{\link[parallel:parLapply]{parallel::parLapply()}} (Windows).
+\pkg{Rcpp}, except on the continuous normal--inverse-gamma path, which
+uses \code{stats::integrate()} at the R level. The trial-level
+data-generating loop is embarrassingly parallel and is parallelised across
+\code{cores} workers via \code{\link[parallel:mclapply]{parallel::mclapply()}} (POSIX) or
+\code{\link[parallel:parLapply]{parallel::parLapply()}} (Windows); the posterior and aggregation passes are
+vectorised and run serially.
 }
 \section{Binding vs non-binding futility}{
 

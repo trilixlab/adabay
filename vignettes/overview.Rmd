@@ -56,6 +56,8 @@ calls and then passes them to the single polymorphic entry point
 The package supports four endpoint types --- continuous, binary, count and
 time-to-event --- through their natural conjugate pairs (normal-normal or
 normal-inverse-gamma; beta-binomial; gamma-Poisson; gamma-exponential).
+These are selected with `set_design(endpoint = ...)` using the values
+`"continuous"`, `"binary"`, `"count"` and `"tte"` respectively.
 
 # A minimal end-to-end session
 
@@ -169,10 +171,12 @@ regardless of `cores`, so the trial-level RNG draws coincide with the
 `cores = 1` stream at every worker count. The posterior and aggregation
 passes are already core-independent. The cost is the loss of simulator
 parallelism, which is a small fraction of total wall-clock for binary,
-count and tte, and a moderate fraction for continuous. Pair the flag
-on `build_cache()` and any downstream `evaluate_design()` /
-`calibrate_design()` call when reproducing a cached grid sweep across
-hardware.
+count and time-to-event, and a moderate fraction for continuous. Set the flag on the
+simulating call only --- `build_cache()`, or `evaluate_design()` on the
+fused path. When reproducing a cached grid sweep across hardware, put it
+on `build_cache()`: the downstream `evaluate_design()` on the cache and
+`calibrate_design()` re-use the stored draws and are already
+core-independent.
 
 # Where to look next
 

@@ -8,8 +8,11 @@
 ## the convex combination of per-component tail probabilities (Eq. S1 of the
 ## supplement).
 ##
-## Slow inner integrals are dispatched to the C++ implementations declared in
-## src/posterior.cpp via Rcpp::sourceCpp; the R-level code below is otherwise
+## Slow inner integrals are dispatched to the C++ implementations in
+## src/posterior.cpp, compiled by R CMD INSTALL and called through the
+## Rcpp-generated wrappers in R/RcppExports.R. The normal--inverse-gamma
+## path is the exception (see the NOTE at .pdiff_t) and uses
+## stats::integrate() at the R level; the R-level code below is otherwise
 ## fully vectorised across the R virtual trials.
 ##
 ## All functions are internal.
@@ -73,7 +76,7 @@
 ## Convert an R x L matrix of (log prior weight + log marginal likelihood) into
 ## an R x L matrix of posterior component weights summing to one across columns.
 ## A single component returns a column of ones, so single-component conjugate
-## priors are bit-identical to the pre-reweighting behaviour of v0.1.0.
+## priors are unaffected by the reweighting.
 .posterior_component_weights <- function(logw) {
   if (ncol(logw) == 1L) return(matrix(1, nrow = nrow(logw), ncol = 1L))
   mx <- logw[cbind(seq_len(nrow(logw)), max.col(logw, ties.method = "first"))]
@@ -236,7 +239,7 @@
   out
 }
 
-## Vectorised dispatch on scale; calls C++ when available, otherwise R fallback.
+## Vectorised dispatch on scale; the quadrature scales call into C++.
 .pdelta_binary <- function(e, scale, a_c, b_c, a_t, b_t) {
   if (scale == "risk_difference") {
     return(pdelta_binary_rd_cpp(e, a_c, b_c, a_t, b_t))

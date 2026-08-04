@@ -46,7 +46,9 @@
 group sequential design. It is polymorphic in its first argument:</p>
 <ul>
   <li><strong>Fused path</strong> (<code>adabay_design</code> as <code>x</code>): simulates <code>n_trials</code> virtual trials at the
-    supplied data-generating values, computes per-look posterior tail probabilities of <em>&Delta;</em> in closed form,
+    supplied data-generating values, computes per-look posterior tail probabilities of <em>&Delta;</em> (in closed form, or by fixed-node
+    Gauss&ndash;Legendre quadrature on the binary and count rate-difference scales and by
+    <code>stats::integrate()</code> on the continuous normal&ndash;inverse-gamma path),
     and applies the supplied decision rule to obtain the per-look stopping probabilities, the overall type I error
     rate (or power under the alternative), and the expected sample size, all in one call. Use this for one-off
     evaluation of a single design.</li>
@@ -98,7 +100,24 @@ group sequential design. It is polymorphic in its first argument:</p>
 power, the expected sample size and (when an accrual specification is supplied) the expected calendar duration.</p>
 
 <div class="section-label">Examples</div>
-<pre><code><span class="code-comment">## Fused path: evaluate a single design directly</span>
+<pre><code><span class="code-comment">## Setup: the five-look ADRENAL re-design of the manuscript's Section 5.2</span>
+des &lt;- <span class="code-function">set_design</span>(
+  endpoint     = <span class="code-string">"binary"</span>,
+  n_per_look   = <span class="code-function">c</span>(<span class="code-number">760</span>, <span class="code-number">1520</span>, <span class="code-number">2280</span>, <span class="code-number">3040</span>, <span class="code-number">3800</span>),
+  effect_scale = <span class="code-string">"risk_difference"</span>,
+  alternative  = <span class="code-string">"less"</span>
+)
+pri &lt;- <span class="code-function">set_prior</span>(
+  endpoint = <span class="code-string">"binary"</span>,
+  arms = <span class="code-function">list</span>(c = <span class="code-function">list</span>(family = <span class="code-string">"beta"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>),
+              t = <span class="code-function">list</span>(family = <span class="code-string">"beta"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>))
+)
+dec &lt;- <span class="code-function">set_decision</span>(
+  efficacy = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.99</span>)),
+  futility = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.90</span>))
+)
+
+<span class="code-comment">## Fused path: evaluate a single design directly</span>
 oc &lt;- <span class="code-function">evaluate_design</span>(des, prior = pri, decision = dec,
                       effect   = <span class="code-function">list</span>(theta_c = <span class="code-number">0.33</span>, theta_t = <span class="code-number">0.28</span>),
                       n_trials = <span class="code-number">200L</span>, cores = <span class="code-number">1L</span>, seed = <span class="code-number">1L</span>)
@@ -113,7 +132,9 @@ cache &lt;- <span class="code-function">build_cache</span>(des, pri,
 oc2 &lt;- <span class="code-function">evaluate_design</span>(cache, dec)
 <span class="code-function">print</span>(oc2)
 
-<span class="code-comment">## Cached path with look_subset: three-look design from the same five-look cache</span>
+<span class="code-comment">## Cached path with look_subset: three-look design from the same five-look</span>
+<span class="code-comment">## cache. Indices must lie within 1..n_looks of the cached design, so this</span>
+<span class="code-comment">## requires the five-look 'des' built above.</span>
 oc_3look &lt;- <span class="code-function">evaluate_design</span>(cache, decision = dec, look_subset = <span class="code-function">c</span>(<span class="code-number">2</span>, <span class="code-number">4</span>, <span class="code-number">5</span>))</code></pre>
 
 </main>
@@ -127,7 +148,8 @@ oc_3look &lt;- <span class="code-function">evaluate_design</span>(cache, decisio
       <li><a href="set_decision.html"><code>set_decision()</code></a></li>
       <li><a href="set_accrual.html"><code>set_accrual()</code></a></li>
       <li><a href="fit_mixture.html"><code>fit_mixture()</code></a></li>
-      <li><a href="build_cache.html"><code>build_cache()</code></a></li>
+      <li><li><a href="evaluate_design.html"><code>evaluate_design()</code></a></li>
+      <a href="build_cache.html"><code>build_cache()</code></a></li>
       <li><a href="calibrate_design.html"><code>calibrate_design()</code></a></li>
       <li><a href="summarise_oc.html"><code>summarise_oc()</code></a></li>
     </ul>

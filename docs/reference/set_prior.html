@@ -89,9 +89,9 @@ pri &lt;- <span class="code-function">set_prior</span>(
 
 <span class="code-comment">## Mixture prior on the control arm from fit_mixture()</span>
 pri_c &lt;- <span class="code-function">fit_mixture</span>(endpoint = <span class="code-string">"binary"</span>, arm = <span class="code-string">"c"</span>,
-                     prior    = <span class="code-keyword">function</span>(theta) <span class="code-function">dlnorm</span>(theta / (<span class="code-number">1</span> - theta),
-                                                       meanlog = -<span class="code-number">0.7</span>,
-                                                       sdlog   = <span class="code-number">0.4</span>))
+                     prior    = <span class="code-keyword">function</span>(theta) <span class="code-function">dnorm</span>(<span class="code-function">log</span>(theta / (<span class="code-number">1</span> - theta)),
+                                                      mean = -<span class="code-number">0.7</span>,
+                                                      sd   = <span class="code-number">0.4</span>) / (theta * (<span class="code-number">1</span> - theta)))
 pri &lt;- <span class="code-function">set_prior</span>(
   endpoint = <span class="code-string">"binary"</span>,
   arms = <span class="code-function">list</span>(c = pri_c,

@@ -75,12 +75,30 @@ meets the targets while minimising the expected sample size. Two caches are requ
 </dl>
 
 <div class="section-label">Value</div>
-<p>A list with elements <code>best</code> (a <code>adabay_oc</code> for the calibrated design) and <code>grid</code>
-(a data frame with one row per threshold combination and columns <em>p</em>, <em>q</em>, <em>&alpha;</em>, power,
-expected sample size, etc.).</p>
+<p>An object of class <code>adabay_calibration</code>: a list with elements <code>best</code> (an <code>adabay_calibration_best</code> object carrying the selected
+thresholds together with <code>type_I</code>, <code>power</code>, <code>expected_sample_size</code> and the full
+<code>oc_h0</code> / <code>oc_h1</code> objects; <code>NULL</code> when no grid point meets the targets) and <code>grid</code>
+(a data frame with one row per threshold combination and columns <code>p</code>, <code>q</code>,
+<code>type_I</code>, <code>power</code> and <code>E_N</code>).</p>
 
 <div class="section-label">Examples</div>
-<pre><code><span class="code-comment">## Calibrate the ADRENAL re-design against alpha = 0.025, power = 0.90</span>
+<pre><code><span class="code-comment">## Setup: the five-look ADRENAL re-design of the manuscript's Section 5.2</span>
+des &lt;- <span class="code-function">set_design</span>(
+  endpoint     = <span class="code-string">"binary"</span>,
+  n_per_look   = <span class="code-function">c</span>(<span class="code-number">760</span>, <span class="code-number">1520</span>, <span class="code-number">2280</span>, <span class="code-number">3040</span>, <span class="code-number">3800</span>),
+  effect_scale = <span class="code-string">"risk_difference"</span>,
+  alternative  = <span class="code-string">"less"</span>
+)
+pri &lt;- <span class="code-function">set_prior</span>(
+  endpoint = <span class="code-string">"binary"</span>,
+  arms = <span class="code-function">list</span>(c = <span class="code-function">list</span>(family = <span class="code-string">"beta"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>),
+              t = <span class="code-function">list</span>(family = <span class="code-string">"beta"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>))
+)
+
+<span class="code-comment">## Calibrate the ADRENAL re-design against alpha = 0.025, power = 0.85</span>
+<span class="code-comment">## (a single common-across-looks threshold cannot reach 90% power at</span>
+<span class="code-comment">## alpha &lt;= 0.025 on this five-look design; the achievable power subject</span>
+<span class="code-comment">## to that constraint peaks near 86%)</span>
 cache_h0 &lt;- <span class="code-function">build_cache</span>(des, pri, effect = <span class="code-function">list</span>(theta_c = <span class="code-number">0.33</span>, theta_t = <span class="code-number">0.33</span>),
                         n_trials = <span class="code-number">1e5</span>, seed = <span class="code-number">1L</span>,
                         threshold_grid = <span class="code-function">list</span>(efficacy = <span class="code-number">0</span>, futility = <span class="code-number">0</span>))
@@ -92,7 +110,7 @@ cal &lt;- <span class="code-function">calibrate_design</span>(
   cache         = cache_h0,
   cache_alt     = cache_h1,
   alpha_target  = <span class="code-number">0.025</span>,
-  power_target  = <span class="code-number">0.90</span>,
+  power_target  = <span class="code-number">0.85</span>,
   efficacy_grid = <span class="code-function">seq</span>(<span class="code-number">0.95</span>, <span class="code-number">0.999</span>, by = <span class="code-number">0.001</span>),
   futility_grid = <span class="code-function">seq</span>(<span class="code-number">0.80</span>, <span class="code-number">0.95</span>,  by = <span class="code-number">0.01</span>)
 )

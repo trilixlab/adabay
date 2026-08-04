@@ -7,8 +7,8 @@
 ## Solve E{D_c(t)} + E{D_t(t)} = d for the calendar time t under independent
 ## per-arm homogeneous Poisson recruitment (rates rate_c/rate_t, allowing an
 ## unbalanced allocation_ratio) and per-arm exponential hazards
-## (lambda_c/lambda_t), using the per-arm recruitment relation of
-## Eq.~(3.4.1) summed across arms:
+## (lambda_c/lambda_t), using the per-arm expected-event-count relation
+## summed across arms:
 ##   E{D_a(t)} = rate_a t - (rate_a / lambda_a) (1 - e^{-lambda_a t}).
 ## Used only to size each arm's enrolment pool in .sim_tte() with a
 ## safety margin -- the expected trial duration reported to the user is
@@ -42,11 +42,10 @@
 ## computed during simulation (sim_tte_cpp(); see .sim_tte()), so
 ## E(T) is instead the exact Monte Carlo mean of the calendar time realised
 ## at each trial's own stopping look -- no analytic approximation and no
-## extra simulation cost. (Earlier versions solved a deterministic
-## mean-field equation E{D(t)} = D_k here instead; that approximation is
-## systematically biased relative to the true expected hitting time of the
-## underlying stochastic process, with the bias growing with the target
-## event count -- see the package NEWS.)
+## extra simulation cost. (Solving the deterministic mean-field equation
+## E{D(t)} = D_k here instead would be systematically biased relative to the
+## true expected hitting time of the underlying stochastic process, with the
+## bias growing with the target event count.)
 ##
 ## Returns NA for unsupported configurations.
 .expected_duration <- function(design, oc, accrual, sim = NULL) {
@@ -114,8 +113,9 @@
 ## independent. The wall-clock cost of cross_core_reproducible = TRUE is
 ## exactly the loss of simulator parallelism (small for binary/count/
 ## tte, where the simulator is a small fraction of total wall-clock;
-## moderate for continuous, where the rnorm pass is larger). Default FALSE
-## preserves backward compatibility with v0.1.0 pinned regression values.
+## moderate for continuous, where the rnorm pass is larger). The default is
+## FALSE, so the simulator uses all requested cores; its output is then
+## bit-identical only at a fixed (seed, cores) pair.
 .simulate_data <- function(design, effect, n_trials,
                            seed = NULL, cores = 1L,
                            cross_core_reproducible = FALSE,
@@ -263,8 +263,9 @@
 ## enrolment process whose arrival times feed the calendar-time exposure
 ## cutoff (see sim_tte_cpp). Each arm's enrolment pool is sized
 ## separately from the analytic calendar time at which the (possibly
-## asymmetric) pooled E{D(t)} reaches the final look (Eq.~(3.4.1), summed
-## per arm), inflated by an 8-SD margin so that the last-enrolled subject in
+## asymmetric) pooled E{D(t)} reaches the final look (the per-arm
+## expected-event-count relation of .tte_tstar(), summed per arm), inflated
+## by an 8-SD margin so that the last-enrolled subject in
 ## each arm almost surely arrives after the final look -- this sizing is an
 ## internal safety margin only; it is not used to report the expected trial
 ## duration (see .expected_duration()).

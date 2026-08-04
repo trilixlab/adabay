@@ -24,18 +24,31 @@
 #'   with no rounding, since exposure is not required to be an integer).
 #' @param d_total Total target number of events for the tte endpoint,
 #'   pooled across both arms; unaffected by \code{allocation_ratio}.
+#'   Defaults to \code{NULL}, in which case the final entry of
+#'   \code{d_per_look} is used.
 #' @param d_per_look Cumulative number of events at each look (tte
 #'   endpoint), pooled across both arms; \eqn{K} is taken from
 #'   \code{length(d_per_look)}. Unaffected by \code{allocation_ratio}.
-#' @param effect_scale Effect-size parameterisation, depending on endpoint.
-#'   See the manuscript for the supported scales per endpoint.
+#' @param effect_scale Effect-size parameterisation. One of
+#'   \code{"mean_difference"} or \code{"standardised_mean_difference"}
+#'   (continuous); \code{"risk_difference"}, \code{"risk_ratio"} or
+#'   \code{"odds_ratio"} (binary); \code{"rate_difference"},
+#'   \code{"rate_ratio"} or \code{"log_rate_ratio"} (count); or
+#'   \code{"hazard_ratio"} or \code{"log_hazard_ratio"} (time-to-event).
 #' @param alternative Direction of the alternative hypothesis,
 #'   \code{"greater"} (default) or \code{"less"}.
 #' @param delta_null Null-hypothesis effect-size value (\eqn{\Delta_{H_0}} in
-#'   the manuscript). Defaults to 0 for absolute scales, 1 for relative
-#'   scales.
-#' @param sigma Common within-arm standard deviation for continuous endpoints
-#'   with a known-variance prior.
+#'   the manuscript). Defaults to the no-effect value of the chosen
+#'   \code{effect_scale}: 0 for the difference scales
+#'   (\code{"mean_difference"}, \code{"standardised_mean_difference"},
+#'   \code{"risk_difference"}, \code{"rate_difference"}) and for the log
+#'   scales (\code{"log_rate_ratio"}, \code{"log_hazard_ratio"}), and 1 for
+#'   the ratio scales (\code{"risk_ratio"}, \code{"odds_ratio"},
+#'   \code{"rate_ratio"}, \code{"hazard_ratio"}).
+#' @param sigma Common within-arm standard deviation of the simulated
+#'   outcome data. Required for every continuous design, since it drives the
+#'   Monte Carlo data generation, and additionally used by the known-variance
+#'   normal prior.
 #' @param allocation_ratio Treatment-to-control allocation ratio, with a
 #'   uniform meaning across all four endpoints: continuous/binary split
 #'   \code{n_per_look} into per-arm sample-size targets by this ratio; count

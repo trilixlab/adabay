@@ -27,7 +27,8 @@
 #' @param futility_grid Numeric vector of futility posterior-probability
 #'   thresholds to search. Use \code{c(1)} to disable futility.
 #' @param futility_binding Logical. Defaults to \code{FALSE}.
-#' @return A list with elements:
+#' @return An object of class \code{"adabay_calibration"}: a list with
+#'   elements
 #'   \describe{
 #'     \item{\code{best}}{An object of class \code{"adabay_calibration_best"}
 #'       (or \code{NULL}, with a warning, if no grid point meets both
@@ -145,7 +146,23 @@ calibrate_design <- function(cache,
     warning("calibrate_design(): no threshold combination met the alpha and ",
             "power targets; returning best = NULL. Inspect 'grid' and relax ",
             "the targets or widen the efficacy/futility grids.", call. = FALSE)
-  list(best = best, grid = do.call(rbind, records))
+  structure(list(best = best, grid = do.call(rbind, records)),
+            class = "adabay_calibration")
+}
+
+#' @noRd
+#' @export
+print.adabay_calibration <- function(x, ...) {
+  cat("Threshold calibration\n")
+  cat(sprintf("  Grid evaluated: %d threshold combination%s (see $grid)\n",
+              nrow(x$grid), if (nrow(x$grid) == 1L) "" else "s"))
+  if (is.null(x$best)) {
+    cat("  No combination met the targets; $best is NULL.\n")
+  } else {
+    cat("\n")
+    print(x$best)
+  }
+  invisible(x)
 }
 
 #' @noRd

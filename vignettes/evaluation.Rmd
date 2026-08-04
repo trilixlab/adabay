@@ -24,12 +24,14 @@ user-supplied data-generating effect. We work through two scenarios on the
 same binary ADRENAL re-design, differing only in the prior:
 
 1. **Conjugate prior** --- independent $\mathrm{Beta}(1, 1)$ priors on the
-   per-arm response rates. The posterior tail probability is evaluated
-   in closed form (beta convolution) at every look, with no quadrature.
+   per-arm response rates. Each per-arm posterior stays a single beta, and
+   the risk-difference tail probability, which has no closed form, is
+   evaluated by a fixed 64-node Gauss--Legendre quadrature at every look
+   (no MCMC).
 2. **Non-conjugate prior** --- a logit-normal prior on the control-arm
-   rate, approximated by a beta mixture via `fit_mixture()`. The
-   convolution argument still holds component-wise, so the per-look
-   tail-probability cost is unchanged.
+   rate, approximated by a beta mixture via `fit_mixture()`. The same
+   quadrature applies component-wise, so the per-look tail-probability
+   cost scales with the number of mixture components.
 
 The shared design and decision rule are constructed once.
 
@@ -52,7 +54,7 @@ dec <- set_decision(
 
 Because `futility_binding = FALSE`, the futility boundary is **non-binding**:
 the reported Type I error rate (`$alpha`) is computed *as if the futility rule
-were ignored*, which is the regulatory convention, whereas the realized power
+were ignored*, which is the regulatory convention, whereas the realised power
 under the actual trial conduct --- in which the trial does stop at a futility
 crossing --- is `$eff_prob`. The two coincide only under binding futility. We
 therefore read Type I error from `$alpha` and power from `$eff_prob` below.
@@ -95,7 +97,7 @@ cat(sprintf("  E(N | H1)          = %.0f patients\n",
             oc_conj_h1$expected_sample_size))
 ```
 
-The per-look stopping probabilities and the fan plot show where the trial
+The per-look stopping probabilities and the bar chart show where the trial
 accumulates efficacy and futility mass.
 
 ```{r conj-plot, fig.alt = "Per-look efficacy and futility stopping probabilities under H1 for the conjugate-prior design."}

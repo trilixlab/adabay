@@ -70,8 +70,9 @@
   <tr><td><code>adabay_decision</code></td>   <td>Decision-rule specification returned by <code>set_decision()</code>.</td></tr>
   <tr><td><code>adabay_accrual</code></td>    <td>Accrual specification returned by <code>set_accrual()</code>.</td></tr>
   <tr><td><code>adabay_cache</code></td>      <td>Cache of per-look tail probabilities returned by <code>build_cache()</code>.</td></tr>
-  <tr><td><code>adabay_oc</code></td>         <td>Operating characteristics returned by <code>evaluate_design()</code> and <code>calibrate_design()</code>.</td></tr>
-  <tr><td><code>adabay_calibration_best</code></td> <td>Selected calibrated design (chosen thresholds with type I and power) in the <code>$best</code> element returned by <code>calibrate_design()</code>.</td></tr>
+  <tr><td><code>adabay_oc</code></td>         <td>Operating characteristics returned by <code>evaluate_design()</code>; also carried as <code>$oc_h0</code> / <code>$oc_h1</code> inside the <code>$best</code> element returned by <code>calibrate_design()</code>.</td></tr>
+  <tr><td><code>adabay_calibration</code></td> <td>Threshold calibration returned by <code>calibrate_design()</code>, carrying <code>$best</code> and the full <code>$grid</code>.</td></tr>
+  <tr><td><code>adabay_calibration_best</code></td> <td>Selected calibrated design (chosen thresholds with type I and power) in the <code>$best</code> element of an <code>adabay_calibration</code>.</td></tr>
 </tbody>
 </table>
 
@@ -79,7 +80,7 @@
 <table class="ref-index">
 <tbody>
   <tr><td><code>print()</code></td>   <td>Compact textual summary for every <code>adabay_*</code> class.</td></tr>
-  <tr><td><code>plot()</code></td>    <td>Stopping-probability fan plot for <code>adabay_oc</code>; density-overlay plot for <code>adabay_prior_arm</code>.</td></tr>
+  <tr><td><code>plot()</code></td>    <td>Stopping-probability bar chart for <code>adabay_oc</code>; density-overlay plot for <code>adabay_prior_arm</code>.</td></tr>
   <tr><td><code>summary()</code></td> <td>Detailed numeric summary for <code>adabay_oc</code>.</td></tr>
 </tbody>
 </table>

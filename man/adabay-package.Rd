@@ -41,6 +41,7 @@ a \code{adabay_design} (fused simulate-and-aggregate path) or a \code{adabay_cac
 Useful links:
 \itemize{
   \item \url{https://github.com/trilixlab/adabay}
+  \item \url{https://trilixlab.github.io/adabay/}
   \item Report bugs at \url{https://github.com/trilixlab/adabay/issues}
 }
 

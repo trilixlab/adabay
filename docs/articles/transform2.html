@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TRANSFORM-2 (continuous endpoint) &mdash; adabay</title>
+<title>TRANSFORM-2 esketamine re-design (continuous endpoint) &mdash; adabay</title>
 <link rel="icon" href="../assets/logo.png">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -37,8 +37,8 @@
 <main>
 
 <div class="page-header">
-  <h1>TRANSFORM-2 esketamine trial (continuous endpoint)</h1>
-  <p class="subtitle">Five-look Bayesian GSD on the MADRS mean-difference scale. Section 5.1 of the manuscript.</p>
+  <h1>TRANSFORM-2 esketamine re-design (continuous endpoint)</h1>
+  <p class="subtitle">Five-look Bayesian GSD on the mean-difference scale. Section 5.1 of the manuscript.</p>
 </div>
 
 <h2>Setting</h2>
@@ -48,9 +48,10 @@ against placebo nasal spray plus a newly initiated oral antidepressant in adults
 The primary endpoint was the change from baseline in the Montgomery&ndash;&Aring;sberg Depression Rating Scale (MADRS,
 range [0, 60]) total score at Day 28 of the four-week induction phase. The trial randomised 227 patients in a 1:1 ratio
 and reported a mean MADRS change of &minus;19.8 in the esketamine arm versus &minus;15.8 in the placebo arm, with a
-treatment-versus-control difference of &minus;4.0 (95% CI &minus;7.31 to &minus;0.64, <em>p</em>&nbsp;=&nbsp;0.020),
-establishing esketamine nasal spray as the first FDA-approved treatment for treatment-resistant depression.</p>
+treatment-versus-control difference of &minus;4.0 (95% CI &minus;7.31 to &minus;0.64, <em>p</em>&nbsp;=&nbsp;0.020).
+Esketamine nasal spray was subsequently approved for treatment-resistant depression.</p>
 
+<h2>Bayesian GSD re-design</h2>
 <p>We re-implement TRANSFORM-2 as a five-look Bayesian GSD (<em>K</em>&nbsp;=&nbsp;5) on the mean-difference scale.
 The data-generating model has &mu;<sub>c</sub>&nbsp;=&nbsp;&minus;15.8 in the placebo arm and
 &mu;<sub>t</sub>&nbsp;=&nbsp;&minus;19.8 in the esketamine arm, with a common within-arm standard deviation
@@ -60,10 +61,12 @@ with &Delta;<sub>H<sub>0</sub></sub>&nbsp;=&nbsp;0. The fixed-sample design at &
 1&nbsp;&minus;&nbsp;&beta;&nbsp;=&nbsp;0.90 requires <em>n</em>&nbsp;=&nbsp;222 patients per arm. The five-look GSD has
 looks equally spaced at <em>n</em>&nbsp;=&nbsp;45, 89, 133, 177, 222 patients per arm, weakly informative priors
 &mu;<sub>a</sub>&nbsp;~&nbsp;<em>N</em>(&minus;10, 10<sup>6</sup>) in both arms, a single-criterion efficacy rule
-&Pscr;(&Delta;&nbsp;&lt;&nbsp;0&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.99 and a futility rule
-&Pscr;(&Delta;&nbsp;&gt;&nbsp;0&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.90.</p>
+&Popf;(&Delta;&nbsp;&lt;&nbsp;0&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.99 and a futility rule
+&Popf;(&Delta;&nbsp;&gt;&nbsp;0&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.90.</p>
 
 <h2>adabay call sequence</h2>
+
+<h3>Design, prior and decision rule</h3>
 <pre><code><span class="code-keyword">library</span>(adabay)
 
 des &lt;- <span class="code-function">set_design</span>(endpoint     = <span class="code-string">"continuous"</span>,
@@ -91,6 +94,25 @@ oc_h1 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
 <span class="code-function">print</span>(oc_h1)
 <span class="code-function">plot</span>(oc_h1)</code></pre>
 
+
+<h3>Extracting the operating characteristics</h3>
+
+<p>The returned <code>adabay_oc</code> objects carry every quantity in the table below:</p>
+<pre><code><span class="code-comment">## Headline operating characteristics (Table 4 of the manuscript)</span>
+oc_h0$alpha                  <span class="code-comment"># type I error rate</span>
+oc_h1$eff_prob               <span class="code-comment"># power</span>
+oc_h0$expected_sample_size   <span class="code-comment"># E(N | H0)</span>
+oc_h1$expected_sample_size   <span class="code-comment"># E(N | H1)</span>
+
+<span class="code-comment">## Per-look stopping probabilities (Table S2 of the supplement)</span>
+oc_h0$eff_prob_at_look       <span class="code-comment"># alpha_k under H0</span>
+oc_h0$fut_prob_at_look       <span class="code-comment"># beta_k  under H0</span>
+oc_h1$eff_prob_at_look       <span class="code-comment"># alpha_k under H1</span>
+oc_h1$fut_prob_at_look       <span class="code-comment"># beta_k  under H1</span>
+
+<span class="code-comment">## Or all of the above as one tidy row per scenario</span>
+<span class="code-function">summarise_oc</span>(<span class="code-function">list</span>(oc_h0, oc_h1))</code></pre>
+
 <h2>Operating characteristics</h2>
 <p>At <em>R</em>&nbsp;=&nbsp;10<sup>6</sup> virtual trials per scenario the re-design reaches a type I error rate of
 3.09% and a power of 85.59%, with an expected sample size of 265 patients across both arms under <em>H<sub>1</sub></em>
@@ -101,8 +123,8 @@ oc_h1 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
 <tr><th>Method</th><th>Trials</th><th>Type I (MC SE)</th><th>Power (MC SE)</th><th>E(N | H<sub>0</sub>)</th><th>E(N | H<sub>1</sub>)</th><th>Time (s)</th></tr>
 </thead>
 <tbody>
-<tr><td>adabay</td>    <td>1,000,000</td> <td>3.09 (0.02)</td><td>85.59 (0.04)</td><td>379</td><td>265</td><td>17.1</td></tr>
-<tr><td>adabay</td>    <td>10,000</td>    <td>2.92 (0.17)</td><td>86.18 (0.35)</td><td>381</td><td>265</td><td>0.3</td></tr>
+<tr><td>adabay</td>    <td>1,000,000</td> <td>3.09 (0.02)</td><td>85.59 (0.04)</td><td>379</td><td>265</td><td>14.6</td></tr>
+<tr><td>adabay</td>    <td>10,000</td>    <td>2.92 (0.17)</td><td>86.18 (0.35)</td><td>381</td><td>265</td><td>0.2</td></tr>
 <tr><td>BATSS</td>     <td>10,000</td>    <td>3.23 (0.18)</td><td>85.46 (0.35)</td><td>381</td><td>264</td><td>~30,724</td></tr>
 <tr><td>adaptr</td>    <td>10,000</td>    <td>3.60 (0.19)</td><td>85.40 (0.35)</td><td>379</td><td>264</td><td>66.0</td></tr>
 <tr><td>gsbDesign</td> <td>analytic</td>  <td>3.09 (&ndash;)</td><td>85.54 (&ndash;)</td><td>379</td><td>266</td><td>0.3</td></tr>
@@ -114,6 +136,88 @@ oc_h1 &lt;- <span class="code-function">evaluate_design</span>(des, pri, dec,
 with 8 <code>mclapply</code> workers and INLA pinned to one thread per worker. Type I error is evaluated at &mu;<sub>t</sub>&nbsp;&minus;&nbsp;&mu;<sub>c</sub>&nbsp;=&nbsp;0 and power at
 &mu;<sub>t</sub>&nbsp;&minus;&nbsp;&mu;<sub>c</sub>&nbsp;=&nbsp;&minus;4 (the observed TRANSFORM-2 mean-difference effect).
 All three simulation-based tools and the analytic gsbDesign reference agree within Monte Carlo error.</p>
+
+
+<h2>Comparator packages</h2>
+<p>The adaptr and BATSS rows in the table above were produced at the matched budget <em>R</em>&nbsp;=&nbsp;10,000; gsbDesign is analytic and has no simulation budget. The calls are shown below:</p>
+<p class="note"><strong>Dependencies.</strong> The comparator snippets below are not part of adabay and are not run by it. Reproducing them requires <code>adaptr</code>, <code>gsbDesign</code> and <code>BATSS</code>, which in turn requires <code>INLA</code>, to be installed; the adabay code on this page needs no additional packages.</p>
+
+<h3>adaptr</h3>
+<pre><code><span class="code-comment">## adaptr comparator (matched budget R = 10,000, 8 cores).</span>
+<span class="code-comment">## fixed_probs disables response-adaptive randomisation, giving a pure GSD;</span>
+<span class="code-comment">## inferiority = 0.10 is adabay&#x27;s binding futility P(mu_t - mu_c &gt; 0) &gt; 0.90.</span>
+spec &lt;- adaptr::<span class="code-function">setup_trial_norm</span>(
+  arms            = <span class="code-function">c</span>(<span class="code-string">&quot;control&quot;</span>, <span class="code-string">&quot;treatment&quot;</span>),
+  true_ys         = <span class="code-function">c</span>(-<span class="code-number">15.8</span>, -<span class="code-number">19.8</span>),   <span class="code-comment"># H1; use c(-15.8, -15.8) for H0</span>
+  sds             = <span class="code-function">c</span>(<span class="code-number">13</span>, <span class="code-number">13</span>),
+  fixed_probs     = <span class="code-function">c</span>(<span class="code-number">0.5</span>, <span class="code-number">0.5</span>),
+  data_looks      = <span class="code-function">c</span>(<span class="code-number">90</span>, <span class="code-number">178</span>, <span class="code-number">266</span>, <span class="code-number">354</span>, <span class="code-number">444</span>),
+  control         = <span class="code-string">&quot;control&quot;</span>,
+  superiority     = <span class="code-number">0.99</span>,
+  inferiority     = <span class="code-number">0.10</span>,
+  highest_is_best = <span class="code-keyword">FALSE</span>,
+  soften_power    = <span class="code-number">1</span>)
+
+res &lt;- adaptr::<span class="code-function">run_trials</span>(spec, n_rep = <span class="code-number">10000</span>, base_seed = <span class="code-number">1L</span>, cores = <span class="code-number">8</span>)
+<span class="code-function">summary</span>(res)                           <span class="code-comment"># type I / power and expected sample size</span></code></pre>
+
+<h3>gsbDesign</h3>
+<pre><code><span class="code-comment">## gsbDesign analytic comparator (numerical integration, single core).</span>
+<span class="code-comment">## gsbDesign scores the UPPER tail, so the analysis is on delta&#x27; = control - treatment;</span>
+<span class="code-comment">## treatment benefit is then delta&#x27; &gt; 0 and the truths are H0 = 0, H1 = +4.</span>
+design &lt;- gsbDesign::<span class="code-function">gsbDesign</span>(
+  nr.stages         = <span class="code-number">5</span>,
+  patients          = <span class="code-function">matrix</span>(<span class="code-function">c</span>(<span class="code-number">45</span>, <span class="code-number">44</span>, <span class="code-number">44</span>, <span class="code-number">44</span>, <span class="code-number">45</span>), ncol = <span class="code-number">1</span>),  <span class="code-comment"># per-stage increment per arm</span>
+  sigma             = <span class="code-number">13</span>,
+  criteria.success  = <span class="code-function">c</span>(<span class="code-number">0</span>, <span class="code-number">0.99</span>),
+  criteria.futility = <span class="code-function">c</span>(<span class="code-number">0</span>, <span class="code-number">0.90</span>),
+  prior.difference  = <span class="code-string">&quot;non-informative&quot;</span>)
+
+sim &lt;- gsbDesign::<span class="code-function">gsbSimulation</span>(
+  truth       = <span class="code-function">c</span>(<span class="code-number">0</span>, <span class="code-number">4</span>),
+  type.update = <span class="code-string">&quot;treatment effect&quot;</span>,
+  method      = <span class="code-string">&quot;numerical integration&quot;</span>,
+  grid.type   = <span class="code-string">&quot;manually&quot;</span>)
+
+x &lt;- gsbDesign::<span class="code-function">gsb</span>(design = design, simulation = sim)
+
+gsbDesign::<span class="code-function">tab</span>(x, <span class="code-string">&quot;success&quot;</span>, atDelta = <span class="code-function">c</span>(<span class="code-number">0</span>, <span class="code-number">4</span>))               <span class="code-comment"># type I and power</span>
+gsbDesign::<span class="code-function">tab</span>(x, <span class="code-string">&quot;cumulative futility&quot;</span>, atDelta = <span class="code-function">c</span>(<span class="code-number">0</span>, <span class="code-number">4</span>))
+gsbDesign::<span class="code-function">tab</span>(x, <span class="code-string">&quot;sample size&quot;</span>, atDelta = <span class="code-function">c</span>(<span class="code-number">0</span>, <span class="code-number">4</span>))           <span class="code-comment"># expected sample size</span></code></pre>
+
+<h3>BATSS</h3>
+<pre><code><span class="code-comment">## BATSS comparator (matched budget R = 10,000, 8 mclapply workers).</span>
+<span class="code-comment">## batss.glm has no base_seed argument, so the L&#x27;Ecuyer stream is set here.</span>
+<span class="code-comment">## Attached, not just namespace-qualified: batss.glm() takes BATSS&#x27;s bare</span>
+<span class="code-comment">## helpers (alloc.balanced, eff.arm.simple, ...), which need it on the path.</span>
+<span class="code-keyword">library</span>(BATSS)
+INLA::<span class="code-function">inla.setOption</span>(num.threads = <span class="code-string">&quot;1:1&quot;</span>)
+<span class="code-function">RNGkind</span>(<span class="code-string">&quot;L&#x27;Ecuyer-CMRG&quot;</span>); <span class="code-function">set.seed</span>(<span class="code-number">1L</span>)
+
+<span class="code-comment">## With H0 = TRUE a single call returns BOTH hypotheses: $H1 uses the supplied</span>
+<span class="code-comment">## beta, and $H0 forces the target coefficient to zero.</span>
+res &lt;- BATSS::<span class="code-function">batss.glm</span>(
+  model       = y ~ group,
+  var         = <span class="code-function">list</span>(y = rnorm, group = alloc.balanced),
+  var.control = <span class="code-function">list</span>(y = <span class="code-function">list</span>(sd = <span class="code-number">13</span>)),
+  family      = <span class="code-string">&quot;gaussian&quot;</span>, link = <span class="code-string">&quot;identity&quot;</span>,
+  beta        = <span class="code-function">c</span>(-<span class="code-number">15.8</span>, -<span class="code-number">4</span>),
+  which       = <span class="code-number">2</span>, alternative = <span class="code-string">&quot;less&quot;</span>,
+  R           = <span class="code-number">10000</span>, N = <span class="code-number">444</span>,
+  interim     = <span class="code-function">list</span>(recruited = <span class="code-function">c</span>(<span class="code-number">90</span>, <span class="code-number">178</span>, <span class="code-number">266</span>, <span class="code-number">354</span>)),
+  prob0       = <span class="code-function">c</span>(control = <span class="code-number">0.5</span>, treatment = <span class="code-number">0.5</span>),
+  delta.eff   = <span class="code-number">0</span>, delta.fut = <span class="code-number">0</span>,
+  eff.arm     = eff.arm.simple, eff.arm.control = <span class="code-function">list</span>(b = <span class="code-number">0.99</span>),
+  fut.arm     = fut.arm.simple, fut.arm.control = <span class="code-function">list</span>(b = <span class="code-number">0.10</span>),
+  eff.trial   = eff.trial.all,  fut.trial = fut.trial.all,
+  H0          = <span class="code-keyword">TRUE</span>,
+  computation = <span class="code-string">&quot;parallel&quot;</span>, mc.cores = <span class="code-number">8</span>)
+
+<span class="code-comment">## type is &quot;1&quot; for an efficacy stop, &quot;2&quot; for futility, &quot;0&quot; for no decision.</span>
+<span class="code-function">mean</span>(res$H0$sample$type == <span class="code-string">&quot;1&quot;</span>)                          <span class="code-comment"># type I error rate</span>
+<span class="code-function">mean</span>(res$H1$sample$type == <span class="code-string">&quot;1&quot;</span>)                          <span class="code-comment"># power</span>
+<span class="code-function">mean</span>(res$H0$sample$control + res$H0$sample$treatment)    <span class="code-comment"># E(N) | H0</span>
+<span class="code-function">mean</span>(res$H1$sample$control + res$H1$sample$treatment)    <span class="code-comment"># E(N) | H1</span></code></pre>
 
 <h2>What this exercises</h2>
 <ul>

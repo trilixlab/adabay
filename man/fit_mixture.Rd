@@ -25,14 +25,28 @@ metadata on the returned object.}
 
 \item{prior}{Either a function \code{prior(x)} returning the density at
 \code{x}, or a numeric vector of independent samples drawn from the
-prior. If a function is given, \code{n_samples} draws are produced by
-inverse-transform sampling on a fine grid.}
+prior. A density function is accepted only for the beta kernel (binary
+endpoints), where \code{n_samples} draws are produced by
+inverse-transform sampling on a fine grid over \eqn{[0, 1]}. For the
+gamma and normal kernels the support is unbounded and no fixed grid is
+reliable, so \code{prior} must be a numeric vector of samples; supplying
+a function raises an error.}
 
 \item{n_components_max}{Maximum number of mixture components to try.}
 
-\item{tol_kl}{Tolerance for the Kullback--Leibler decrement that defines
-the elbow rule. The smallest L for which the decrement falls below
-\code{tol_kl} is selected.}
+\item{tol_kl}{Mixture-fit tolerance, supplied on the natural (untransformed)
+scale, e.g. \code{1e-3}. When \pkg{RBesT} is installed -- the default
+path -- it is forwarded to \code{RBesT::automixfit()} as the
+per-parameter EM convergence tolerance \code{eps}, which \pkg{RBesT}
+expresses on a \eqn{-\log_{10}} scale, so \code{tol_kl = 1e-3} is passed
+as \code{eps = 3}; the number of components is then chosen by the AIC
+rule inside \code{RBesT::automixfit()}. When \pkg{RBesT} is absent, the
+internal expectation-maximisation fallback uses \code{tol_kl} directly as
+the Kullback--Leibler decrement defining the elbow: the elbow is the
+smallest \eqn{L} past which adding a component no longer improves the
+divergence by at least \code{tol_kl}. That elbow is the starting point,
+not the answer, because the \code{tol_tail} stage may select a larger
+\eqn{L}.}
 
 \item{tol_tail}{Tolerance for the maximum absolute tail-probability error
 across the default tail thresholds; \code{warning()} fires when the
@@ -67,8 +81,15 @@ table, the maximum absolute tail error, a density overlay grid, the
 Approximates a user-supplied prior on an arm-specific parameter by a
 finite mixture of conjugate components (beta, normal or gamma kernels)
 fitted by minimisation of the empirical forward Kullback--Leibler
-divergence. The number of components is selected by an elbow rule on the
-divergence decrement, capped at \code{n_components_max}.
+divergence. The number of components is selected by
+\code{RBesT::automixfit()}'s AIC rule when the suggested \pkg{RBesT}
+package is installed. Otherwise the internal fallback locates an elbow in
+the divergence decrement -- the smallest \eqn{L} past which adding a
+component no longer improves the divergence by at least \code{tol_kl} --
+and then continues past that elbow one component at a time until the
+maximum absolute tail-probability error falls within \code{tol_tail},
+returning the smallest-error fit if none does. Either way the count is
+capped at \code{n_components_max}.
 }
 \details{
 Forward KL is mass-covering: it pressures the approximation to put mass

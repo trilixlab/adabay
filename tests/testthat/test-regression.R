@@ -120,12 +120,10 @@ test_that("tte semi-simulation matches stored operating characteristics", {
                         accrual = acc,
                         n_trials = 200, cores = 1, seed = 20260512L)
 
-  ## Pinned values updated: accrual$rate is now the pooled (both-arms) rate
-  ## (by_arm was removed), so rate = 40 here is the pooled equivalent of the
-  ## old rate = 20 with by_arm = TRUE. This also shifts the RNG stream
-  ## position relative to the previous pinned values (0.850/0.150), since
-  ## .sim_tte()'s enrolment-pool sizing depends on the per-arm rates
-  ## derived from the pooled rate. See NEWS.md.
+  ## accrual$rate is the pooled (both-arms) rate, so rate = 40 here is
+  ## 20 per arm at the 1:1 allocation. The pinned values below are tied to
+  ## that convention, because .sim_tte()'s enrolment-pool sizing depends on
+  ## the per-arm rates derived from the pooled rate.
   expect_equal(oc$alpha, 0.850, tolerance = 1e-6)
   expect_equal(oc$fut_prob,  0.150, tolerance = 1e-6)
 })
@@ -184,15 +182,17 @@ test_that("calibrate_design requires cache_alt and matches direct sweep", {
                           alpha_target = 0.5, power_target = 0.1,
                           efficacy_grid = c(0.50, 0.90, 0.95),
                           futility_grid = c(1))
+  expect_s3_class(cal, "adabay_calibration")
   expect_s3_class(cal$best, "adabay_calibration_best")
   expect_true(all(c("p", "q", "type_I", "power", "E_N") %in% names(cal$grid)))
   expect_true(all(cal$grid$type_I >= 0 & cal$grid$type_I <= 1))
   expect_true(all(cal$grid$power  >= 0 & cal$grid$power  <= 1))
 
-  ## Regression guard: cal$best$type_I / cal$best$power must come from the
-  ## H0 / H1 caches respectively (previously cal$best was the raw H1
-  ## adabay_oc object, whose own $alpha field -- actually H1 power -- was
-  ## mislabelled "Type I error" by the generic adabay_oc print method).
+  ## Guard: cal$best$type_I / cal$best$power must come from the H0 / H1
+  ## caches respectively. This is why $best carries its own class rather
+  ## than being an adabay_oc: an adabay_oc's $alpha field evaluated under
+  ## H1 is the power, which the generic print method would label
+  ## "Type I error".
   best_row <- cal$grid[cal$grid$p == cal$best$p & cal$grid$q == cal$best$q, ]
   expect_equal(cal$best$type_I, best_row$type_I)
   expect_equal(cal$best$power, best_row$power)

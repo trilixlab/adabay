@@ -1,4 +1,4 @@
-# Input-domain validation hardening, from the v0.1.0 input/output audit.
+# Input-domain validation hardening.
 # Each bad input must fail fast with an informative error rather than
 # producing NA / silently-wrong operating characteristics downstream.
 

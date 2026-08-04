@@ -74,23 +74,17 @@
 <p>
   Across four worked case studies, one per endpoint type, adabay reproduces the operating characteristics of BATSS and
   adaptr within Monte Carlo error on the binary and continuous case studies (and of BATSS on the count case study), while
-  running approximately four orders of magnitude faster than BATSS and approximately one to two orders of magnitude faster
+  running approximately four to five orders of magnitude faster than BATSS and approximately one to over two orders of magnitude faster
   than adaptr per virtual trial at a common eight-core configuration and matched simulation budget.
 </p>
 
 <h2>Installation</h2>
-<p>Install the development version from GitHub:</p>
-<pre><code><span class="code-comment"># install.packages("devtools")</span>
-devtools::<span class="code-function">install_github</span>(<span class="code-string">"trilixlab/adabay"</span>)</code></pre>
+<p>Install from GitHub:</p>
+<pre><code><span class="code-comment"># install.packages("remotes")</span>
+remotes::<span class="code-function">install_github</span>(<span class="code-string">"trilixlab/adabay"</span>)</code></pre>
 
-<p>Or install the release tarball directly from GitHub — no manual download needed:</p>
-<pre><code><span class="code-function">install.packages</span>(
-  <span class="code-string">"https://github.com/trilixlab/adabay/releases/download/v0.1.0/adabay_0.1.0.tar.gz"</span>,
-  repos = <span class="code-function">NULL</span>, type = <span class="code-string">"source"</span>
-)</code></pre>
-
-<p>Or download the tarball from the <a href="https://github.com/trilixlab/adabay/releases/tag/v0.1.0">Releases page</a> and install it locally:</p>
-<pre><code>devtools::<span class="code-function">install_local</span>(<span class="code-string">"adabay_0.1.0.tar.gz"</span>)</code></pre>
+<p>Or install from the source tarball distributed with the supplementary materials:</p>
+<pre><code><span class="code-function">install.packages</span>(<span class="code-string">"adabay_0.1.0.tar.gz"</span>, repos = <span class="code-keyword">NULL</span>, type = <span class="code-string">"source"</span>)</code></pre>
 
 <p>
   The optional <code>RBesT</code> package is recommended for fitting non-conjugate priors via <code>fit_mixture()</code>.
@@ -198,7 +192,7 @@ oc &lt;- <span class="code-function">evaluate_design</span>(des,
 
 <h2>Worked examples</h2>
 
-<p>The four case studies of Section 5 of the manuscript &mdash; one per endpoint type, each based on a published phase III
+<p>The four case studies of Section 5 of the manuscript &mdash; one per endpoint type, each based on a published phase II/III or phase III
 trial &mdash; are reproduced as self-contained scripts in <code>inst/examples/</code> of the package, and written up as
 articles on this site.</p>
 
@@ -227,8 +221,9 @@ articles on this site.</p>
 
 <h2>Performance</h2>
 
-<p>The trial-simulation loop and the per-look posterior update are written in C++ via <code>Rcpp</code> using a 64-node
-Gauss&ndash;Legendre quadrature. The trial-level loop parallelises through <code>parallel::mclapply</code> (POSIX) or
+<p>The time-to-event trial simulator and the fixed 64-node Gauss&ndash;Legendre quadrature used for the binary and
+count rate-difference tails are written in C++ via <code>Rcpp</code>; the remaining simulation loops and the
+user-facing interface are written in R. The trial-level loop parallelises through <code>parallel::mclapply</code> (POSIX) or
 <code>parallel::parLapply</code> (Windows), with reproducibility within any fixed <code>(seed, cores)</code> pair guaranteed
 by the L'Ecuyer combined multiple-recursive generator.</p>
 
@@ -241,23 +236,23 @@ analytic on a single core. Wall-clock is the sum of the paired <em>H</em><sub>0<
   <tr><th>Endpoint</th><th>Method</th><th>Trials</th><th>Wall-clock (s)</th></tr>
 </thead>
 <tbody>
-  <tr><td>Continuous (TRANSFORM-2)</td><td>adabay </td><td>1,000,000  </td><td>17.1</td></tr>
-  <tr><td>Continuous (TRANSFORM-2)</td><td>adabay </td><td>10,000     </td><td>0.3</td></tr>
+  <tr><td>Continuous (TRANSFORM-2)</td><td>adabay </td><td>1,000,000  </td><td>14.6</td></tr>
+  <tr><td>Continuous (TRANSFORM-2)</td><td>adabay </td><td>10,000     </td><td>0.2</td></tr>
   <tr><td>Continuous (TRANSFORM-2)</td><td>BATSS     </td><td>10,000     </td><td>~30,724</td></tr>
   <tr><td>Continuous (TRANSFORM-2)</td><td>adaptr    </td><td>10,000     </td><td>66.0</td></tr>
   <tr><td>Continuous (TRANSFORM-2)</td><td>gsbDesign </td><td>analytic   </td><td>0.3</td></tr>
-  <tr style="border-top: 2px solid #adb5bd;"><td>Binary (ADRENAL)        </td><td>adabay </td><td>1,000,000  </td><td>169.1</td></tr>
-  <tr><td>Binary (ADRENAL)        </td><td>adabay </td><td>10,000     </td><td>2.0</td></tr>
+  <tr style="border-top: 2px solid #adb5bd;"><td>Binary (ADRENAL)        </td><td>adabay </td><td>1,000,000  </td><td>137.9</td></tr>
+  <tr><td>Binary (ADRENAL)        </td><td>adabay </td><td>10,000     </td><td>1.6</td></tr>
   <tr><td>Binary (ADRENAL)        </td><td>BATSS     </td><td>10,000     </td><td>~32,317</td></tr>
   <tr><td>Binary (ADRENAL)        </td><td>adaptr    </td><td>10,000     </td><td>62.7</td></tr>
   <tr><td>Binary (ADRENAL)        </td><td>gsbDesign </td><td>n/a        </td><td>n/a</td></tr>
-  <tr style="border-top: 2px solid #adb5bd;"><td>Count (BNT162b2)        </td><td>adabay </td><td>1,000,000  </td><td>7.0</td></tr>
+  <tr style="border-top: 2px solid #adb5bd;"><td>Count (BNT162b2)        </td><td>adabay </td><td>1,000,000  </td><td>4.7</td></tr>
   <tr><td>Count (BNT162b2)        </td><td>adabay </td><td>10,000     </td><td>0.1</td></tr>
   <tr><td>Count (BNT162b2)        </td><td>BATSS     </td><td>10,000     </td><td>~35,776</td></tr>
   <tr><td>Count (BNT162b2)        </td><td>adaptr    </td><td>n/a        </td><td>n/a</td></tr>
   <tr><td>Count (BNT162b2)        </td><td>gsbDesign </td><td>n/a        </td><td>n/a</td></tr>
-  <tr style="border-top: 2px solid #adb5bd;"><td>Time-to-event (CheckMate-141)</td><td>adabay </td><td>1,000,000  </td><td>93.0</td></tr>
-  <tr><td>Time-to-event (CheckMate-141)</td><td>adabay </td><td>10,000     </td><td>0.8</td></tr>
+  <tr style="border-top: 2px solid #adb5bd;"><td>Time-to-event (CheckMate-141)</td><td>adabay </td><td>1,000,000  </td><td>75.1</td></tr>
+  <tr><td>Time-to-event (CheckMate-141)</td><td>adabay </td><td>10,000     </td><td>0.7</td></tr>
   <tr><td>Time-to-event (CheckMate-141)</td><td>BATSS     </td><td>n/a        </td><td>n/a</td></tr>
   <tr><td>Time-to-event (CheckMate-141)</td><td>adaptr    </td><td>n/a        </td><td>n/a</td></tr>
   <tr><td>Time-to-event (CheckMate-141)</td><td>gsbDesign </td><td>n/a        </td><td>n/a</td></tr>
@@ -269,8 +264,8 @@ generator (<code>cores = 8</code>); adaptr on 8 cores via its native parallel ba
 workers and INLA pinned to one thread per worker; gsbDesign analytic on a single core. Since the three simulation-based
 packages all run on 8 cores at the matched <em>R</em>&nbsp;=&nbsp;10,000 budget, their wall-clock times are directly
 comparable at equal parallelism: the per-virtual-trial speedups of adabay on the binary case are approximately
-31&times; versus adaptr (between one and two orders of magnitude) and approximately
-1.6&thinsp;&times;&thinsp;10<sup>4</sup>&thinsp;&times; versus BATSS (four orders of magnitude). BATSS does not support
+39&times; versus adaptr (between one and two orders of magnitude) and approximately
+2.0&thinsp;&times;&thinsp;10<sup>4</sup>&thinsp;&times; versus BATSS (four orders of magnitude). BATSS does not support
 time-to-event endpoints and adaptr covers only continuous and binary outcomes, so those comparisons are not constructible
 (reported as n/a in manuscript Tables&nbsp;4&ndash;7).</p>
 
@@ -279,14 +274,14 @@ time-to-event endpoints and adaptr covers only continuous and binary outcomes, s
 <pre><code>He Z, Yu F (2026).
 adabay: an R package for rapid evaluation and calibration of Bayesian
 group sequential designs across common endpoint types.
-R package version 0.1.0. arXiv preprint (forthcoming).
-URL https://github.com/trilixlab/adabay.
+R package version 0.1.0. arXiv preprint arXiv:2608.01068.
+URL https://arxiv.org/abs/2608.01068.
 
 He Z, Yu F, Cro S, Billot L (2026).
 Rapid evaluation and calibration of Bayesian group sequential designs
 via conjugate-mixture semi-simulation.
-arXiv preprint arXiv:2509.05537. (Companion methodology paper.)
-URL https://arxiv.org/abs/2509.05537.</code></pre>
+arXiv preprint arXiv:2607.22900. (Companion methodology paper.)
+URL https://arxiv.org/abs/2607.22900.</code></pre>
 
 </main>
 

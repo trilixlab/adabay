@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BNT162b2 vaccine trial (count endpoint) &mdash; adabay</title>
+<title>BNT162b2 vaccine re-design (count endpoint) &mdash; adabay</title>
 <link rel="icon" href="../assets/logo.png">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -37,7 +37,7 @@
 <main>
 
 <div class="page-header">
-  <h1>Pfizer&ndash;BioNTech BNT162b2 vaccine trial (count endpoint)</h1>
+  <h1>BNT162b2 vaccine re-design (count endpoint)</h1>
   <p class="subtitle">Five-look Bayesian GSD on the log-rate-ratio scale. Section 5.3 of the manuscript.</p>
 </div>
 
@@ -54,6 +54,7 @@ approximately &lambda;<sub>c</sub>&nbsp;=&nbsp;0.018 cases per person-year. Case
 process in each arm satisfy the gamma&ndash;Poisson conjugate pair exactly, so the strict Poisson model implemented by
 adabay is the natural design-stage idealisation.</p>
 
+<h2>Bayesian GSD re-design</h2>
 <p>We re-implement the BNT162b2 design as a five-look Bayesian GSD (<em>K</em>&nbsp;=&nbsp;5) with looks placed at the
 cumulative person-time at which each prespecified case-count milestone is expected to fire under <em>H<sub>1</sub></em>.
 Under &lambda;-bar&nbsp;=&nbsp;(&lambda;<sub>c</sub>&nbsp;+&nbsp;&lambda;<sub>t</sub>)&thinsp;/&thinsp;2&nbsp;&asymp;&nbsp;0.0126
@@ -61,15 +62,17 @@ per person-year at the designed-to-detect alternative, the case-count grid 32, 6
 person-time <em>E</em>&nbsp;=&nbsp;1,270, 2,460, 3,650, 4,760, 6,510 per arm. We assign independent
 Gamma(1, 1) priors on both &lambda;<sub>c</sub> and &lambda;<sub>t</sub>, a
 single-criterion efficacy rule
-&Pscr;(log&nbsp;&Delta;&nbsp;&lt;&nbsp;log&nbsp;0.70&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.99
+&Popf;(log&nbsp;&Delta;&nbsp;&lt;&nbsp;log&nbsp;0.70&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.99
 on the log-rate-ratio scale (the protocol superiority criterion against VE&nbsp;&gt;&nbsp;30%) and a futility rule
-&Pscr;(log&nbsp;&Delta;&nbsp;&gt;&nbsp;log&nbsp;0.70&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.90.</p>
+&Popf;(log&nbsp;&Delta;&nbsp;&gt;&nbsp;log&nbsp;0.70&nbsp;|&nbsp;&middot;)&nbsp;&gt;&nbsp;0.90.</p>
 
 <p>The gamma&ndash;Poisson conjugate update in adabay reduces the posterior tail probability to a beta cumulative
 distribution function (Appendix B of the manuscript), so no quadrature is required and the per-trial cost is dominated
 by the count-data simulator.</p>
 
 <h2>adabay call sequence</h2>
+
+<h3>Design, prior and decision rule</h3>
 <pre><code><span class="code-keyword">library</span>(adabay)
 
 des &lt;- <span class="code-function">set_design</span>(endpoint         = <span class="code-string">"count"</span>,
@@ -101,9 +104,28 @@ scenario uses the designed-to-detect alternative (&Delta;<sup>*</sup>&nbsp;=&nbs
 trial observed an outcome far inside the rejection region (eight vaccine cases versus 162 placebo cases at the final
 analysis, VE&nbsp;=&nbsp;95.0%) and crossed the protocol superiority boundary at the fourth interim.</p>
 
+
+<h3>Extracting the operating characteristics</h3>
+
+<p>The returned <code>adabay_oc</code> objects carry every quantity in the table below:</p>
+<pre><code><span class="code-comment">## Headline operating characteristics (Table 6 of the manuscript)</span>
+oc_h0$alpha                  <span class="code-comment"># type I error rate</span>
+oc_h1$eff_prob               <span class="code-comment"># power</span>
+oc_h0$expected_sample_size   <span class="code-comment"># E(E | H0), expected cumulative person-time</span>
+oc_h1$expected_sample_size   <span class="code-comment"># E(E | H1), expected cumulative person-time</span>
+
+<span class="code-comment">## Per-look stopping probabilities (Table S4 of the supplement)</span>
+oc_h0$eff_prob_at_look       <span class="code-comment"># alpha_k under H0</span>
+oc_h0$fut_prob_at_look       <span class="code-comment"># beta_k  under H0</span>
+oc_h1$eff_prob_at_look       <span class="code-comment"># alpha_k under H1</span>
+oc_h1$fut_prob_at_look       <span class="code-comment"># beta_k  under H1</span>
+
+<span class="code-comment">## Or all of the above as one tidy row per scenario</span>
+<span class="code-function">summarise_oc</span>(<span class="code-function">list</span>(oc_h0, oc_h1))</code></pre>
+
 <h2>Operating characteristics</h2>
 <p>At <em>R</em>&nbsp;=&nbsp;10<sup>6</sup> virtual trials per scenario the re-design reaches a type I error rate of
-2.90% and a power of 87.68%, with an expected cumulative person-time of 7,662 patient-years across both arms under
+2.90% and a power of 87.68%, with an expected cumulative person-time of 7,662 person-years across both arms under
 <em>H<sub>1</sub></em> (versus the fixed-sample maximum of 13,020).</p>
 
 <table>
@@ -111,7 +133,7 @@ analysis, VE&nbsp;=&nbsp;95.0%) and crossed the protocol superiority boundary at
 <tr><th>Method</th><th>Trials</th><th>Type I (MC SE)</th><th>Power (MC SE)</th><th>E(E | H<sub>0</sub>)</th><th>E(E | H<sub>1</sub>)</th><th>Time (s)</th></tr>
 </thead>
 <tbody>
-<tr><td>adabay</td> <td>1,000,000</td> <td>2.90 (0.02)</td><td>87.68 (0.03)</td><td>11,046</td><td>7,662</td><td>7.0</td></tr>
+<tr><td>adabay</td> <td>1,000,000</td> <td>2.90 (0.02)</td><td>87.68 (0.03)</td><td>11,046</td><td>7,662</td><td>4.7</td></tr>
 <tr><td>adabay</td> <td>10,000</td>    <td>3.02 (0.17)</td><td>88.37 (0.32)</td><td>11,038</td><td>7,636</td><td>0.1</td></tr>
 <tr><td>BATSS</td>  <td>10,000</td>    <td>3.04 (0.17)</td><td>87.91 (0.33)</td><td>11,031</td><td>7,610</td><td>~35,776</td></tr>
 <tr><td>adaptr</td> <td>n/a</td>       <td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td><td>n/a</td></tr>
@@ -131,6 +153,49 @@ arms. Type I error is evaluated at
 &lambda;<sub>t</sub>&thinsp;/&thinsp;&lambda;<sub>c</sub>&nbsp;=&nbsp;0.70 (the protocol superiority threshold,
 VE&nbsp;=&nbsp;30%) and power at &lambda;<sub>t</sub>&thinsp;/&thinsp;&lambda;<sub>c</sub>&nbsp;=&nbsp;0.40
 (the designed-to-detect alternative, VE&nbsp;=&nbsp;60%).</p>
+
+
+<h2>Comparator packages</h2>
+<p>The comparator rows in the table above were produced at the matched budget <em>R</em>&nbsp;=&nbsp;10,000 with BATSS. The calls are shown below:</p>
+<p class="note"><strong>Dependencies.</strong> The comparator snippets below are not part of adabay and are not run by it. Reproducing them requires <code>BATSS</code>, which in turn requires <code>INLA</code>, to be installed; the adabay code on this page needs no additional packages.</p>
+
+<h3>BATSS</h3>
+<pre><code><span class="code-comment">## BATSS comparator (matched budget R = 10,000, 8 mclapply workers).</span>
+<span class="code-comment">## Attached, not just namespace-qualified: batss.glm() takes BATSS&#x27;s bare</span>
+<span class="code-comment">## helpers (alloc.balanced, eff.arm.simple, ...), which need it on the path.</span>
+<span class="code-keyword">library</span>(BATSS)
+INLA::<span class="code-function">inla.setOption</span>(num.threads = <span class="code-string">&quot;1:1&quot;</span>)
+<span class="code-function">RNGkind</span>(<span class="code-string">&quot;L&#x27;Ecuyer-CMRG&quot;</span>); <span class="code-function">set.seed</span>(<span class="code-number">1L</span>)
+
+<span class="code-comment">## adabay judges both hypotheses against the protocol margin log(0.70), so the</span>
+<span class="code-comment">## null must be simulated AT the margin (rate ratio 0.70) rather than at BATSS&#x27;s</span>
+<span class="code-comment">## automatic ratio-1 null: H0 = FALSE, and each truth is its own call.</span>
+<span class="code-comment">## batss.glm takes N and the interims as TOTALS across both arms, so the adabay</span>
+<span class="code-comment">## per-arm person-time schedule c(1270, 2460, 3650, 4760, 6510) is doubled here.</span>
+run_one &lt;- <span class="code-keyword">function</span>(beta_eff) BATSS::<span class="code-function">batss.glm</span>(
+  model       = y ~ group,
+  var         = <span class="code-function">list</span>(y = rpois, group = alloc.balanced),
+  var.control = <span class="code-function">list</span>(),
+  family      = <span class="code-string">&quot;poisson&quot;</span>, link = <span class="code-string">&quot;log&quot;</span>,
+  beta        = <span class="code-function">c</span>(<span class="code-function">log</span>(<span class="code-number">0.018</span>), beta_eff),
+  which       = <span class="code-number">2</span>, alternative = <span class="code-string">&quot;less&quot;</span>,
+  R           = <span class="code-number">10000</span>, N = <span class="code-number">13020</span>,
+  interim     = <span class="code-function">list</span>(recruited = <span class="code-function">c</span>(<span class="code-number">2540</span>, <span class="code-number">4920</span>, <span class="code-number">7300</span>, <span class="code-number">9520</span>)),
+  prob0       = <span class="code-function">c</span>(control = <span class="code-number">0.5</span>, treatment = <span class="code-number">0.5</span>),
+  delta.eff   = <span class="code-function">log</span>(<span class="code-number">0.70</span>), delta.fut = <span class="code-function">log</span>(<span class="code-number">0.70</span>),
+  eff.arm     = eff.arm.simple, eff.arm.control = <span class="code-function">list</span>(b = <span class="code-number">0.99</span>),
+  fut.arm     = fut.arm.simple, fut.arm.control = <span class="code-function">list</span>(b = <span class="code-number">0.10</span>),
+  eff.trial   = eff.trial.all,  fut.trial = fut.trial.all,
+  H0          = <span class="code-keyword">FALSE</span>,
+  computation = <span class="code-string">&quot;parallel&quot;</span>, mc.cores = <span class="code-number">8</span>)
+
+r_typeI &lt;- <span class="code-function">run_one</span>(<span class="code-function">log</span>(<span class="code-number">0.70</span>))    <span class="code-comment"># truth at the margin      -&gt; type I</span>
+r_power &lt;- <span class="code-function">run_one</span>(<span class="code-function">log</span>(<span class="code-number">0.40</span>))    <span class="code-comment"># truth at the alternative -&gt; power</span>
+
+<span class="code-function">mean</span>(r_typeI$H1$sample$type == <span class="code-string">&quot;1&quot;</span>)                              <span class="code-comment"># type I error rate</span>
+<span class="code-function">mean</span>(r_power$H1$sample$type == <span class="code-string">&quot;1&quot;</span>)                              <span class="code-comment"># power</span>
+<span class="code-function">mean</span>(r_typeI$H1$sample$control + r_typeI$H1$sample$treatment)    <span class="code-comment"># E(E) | H0</span>
+<span class="code-function">mean</span>(r_power$H1$sample$control + r_power$H1$sample$treatment)    <span class="code-comment"># E(E) | H1</span></code></pre>
 
 <h2>What this exercises</h2>
 <ul>

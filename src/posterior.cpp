@@ -9,9 +9,10 @@
 // The number of quadrature nodes (NODES) is chosen large enough that the
 // numerical error is well below the Monte Carlo error at typical R = 1e5.
 //
-// Build via Rcpp::sourceCpp() during package install; called from R wrappers
-// in posterior.R that fall back to vectorised R quadrature when this
-// translation unit is unavailable.
+// Compiled by R CMD INSTALL and exposed through the Rcpp::compileAttributes()
+// stubs in src/RcppExports.cpp, registered via useDynLib(adabay, .registration
+// = TRUE). The R wrappers in posterior.R call these entry points
+// unconditionally -- there is no R-level fallback for the quadrature scales.
 
 #include <Rcpp.h>
 #include <vector>

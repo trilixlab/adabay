@@ -38,7 +38,7 @@
 
 <h1>Articles</h1>
 <p class="lead">Worked case studies and longer-form tutorials. The four case studies below mirror the four endpoint
-types covered by adabay and are each based on a published phase III trial. The full scripts are shipped in
+types covered by adabay and are each based on a published phase II/III or phase III trial. The full scripts are shipped in
 <code>inst/examples/</code> of the package.</p>
 
 <h2>Case studies (one per endpoint type)</h2>
@@ -47,30 +47,30 @@ types covered by adabay and are each based on a published phase III trial. The f
 
   <a href="transform2.html" class="card">
     <span class="endpoint-tag">Continuous</span>
-    <h3>TRANSFORM-2 esketamine trial</h3>
-    <p>Five-look Bayesian GSD on the MADRS mean-difference scale; benchmarks against gsbDesign, BATSS and adaptr
-       (Section 5.1 of the manuscript).</p>
+    <h3>TRANSFORM-2 esketamine re-design</h3>
+    <p>Esketamine nasal spray vs placebo in treatment-resistant depression; five-look Bayesian GSD on the
+         mean-difference scale; benchmarked against gsbDesign, adaptr and BATSS (Section 5.1).</p>
   </a>
 
   <a href="adrenal.html" class="card">
     <span class="endpoint-tag">Binary</span>
-    <h3>ADRENAL re-design</h3>
-    <p>Hydrocortisone vs placebo in septic shock; 90-day mortality endpoint;
-       benchmarked against BATSS and adaptr at matched <em>R</em>&nbsp;=&nbsp;10,000 (Section 5.2).</p>
+    <h3>ADRENAL hydrocortisone re-design</h3>
+    <p>Hydrocortisone vs placebo in septic shock; five-look Bayesian GSD on the risk-difference scale;
+         benchmarked against adaptr and BATSS (Section 5.2).</p>
   </a>
 
   <a href="bnt162b2.html" class="card">
     <span class="endpoint-tag">Count</span>
-    <h3>BNT162b2 vaccine trial</h3>
-    <p>Pfizer&ndash;BioNTech COVID-19 mRNA vaccine; cumulative case counts under a gamma&ndash;Poisson model on the
-       log-rate-ratio scale (Section 5.3).</p>
+    <h3>BNT162b2 vaccine re-design</h3>
+    <p>BNT162b2 mRNA vaccine vs placebo for COVID-19 prevention; five-look Bayesian GSD on the
+         log-rate-ratio scale; benchmarked against BATSS (Section 5.3).</p>
   </a>
 
   <a href="checkmate141.html" class="card">
     <span class="endpoint-tag">Time-to-event</span>
-    <h3>CheckMate-141 HNSCC trial</h3>
-    <p>Nivolumab vs chemotherapy in recurrent or metastatic head and neck cancer; event-driven five-look design with
-       Poisson recruitment (Section 5.4).</p>
+    <h3>CheckMate-141 nivolumab re-design</h3>
+    <p>Nivolumab vs chemotherapy in head and neck cancer; five-look event-driven Bayesian GSD on the
+         log-hazard-ratio scale with Poisson recruitment; no faithful comparator is constructible (Section 5.4).</p>
   </a>
 
 </div>
@@ -83,8 +83,8 @@ types covered by adabay and are each based on a published phase III trial. The f
   <li><strong>evaluation.</strong> Evaluating a Bayesian GSD with conjugate and non-conjugate priors, including the
       <code>fit_mixture()</code> tail-probability diagnostics.</li>
   <li><strong>calibration.</strong> End-to-end threshold calibration from <code>build_cache()</code> through
-      <code>calibrate_design()</code>, recovering the calibrated three- and five-look ADRENAL designs of the
-      methodology paper.</li>
+      <code>calibrate_design()</code> for common-across-looks thresholds, plus a stage-specific
+      Haybittle&ndash;Peto-style schedule evaluated from the same cache.</li>
 </ul>
 
 <p class="muted">Built with <code>knitr</code>. View locally with <code>vignette(package = "adabay")</code> after installing the package.</p>

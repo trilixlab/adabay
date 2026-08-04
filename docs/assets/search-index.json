@@ -1,1 +1,110 @@
-[{"title":"adabay \u2014 home","section":"Overview","url":"index.html","kw":"home overview adabay Bayesian group sequential design GSD semi-simulation install installation quick start endpoints performance citation"},{"title":"Function reference","section":"Reference","url":"reference/index.html","kw":"reference functions index API all exported S3 classes methods"},{"title":"set_design()","section":"Function reference","url":"reference/set_design.html","kw":"set_design design endpoint look schedule sample size n_per_look exposure_per_look d_per_look effect_scale alternative sigma allocation_ratio"},{"title":"set_prior()","section":"Function reference","url":"reference/set_prior.html","kw":"set_prior prior per arm conjugate beta normal gamma nig mixture"},{"title":"set_decision()","section":"Function reference","url":"reference/set_decision.html","kw":"set_decision decision rule efficacy futility binding non-binding threshold posterior probability"},{"title":"set_accrual()","section":"Function reference","url":"reference/set_accrual.html","kw":"set_accrual accrual recruitment Poisson piecewise callback follow-up dropout exponential"},{"title":"fit_mixture()","section":"Function reference","url":"reference/fit_mixture.html","kw":"fit_mixture mixture conjugate non-conjugate prior beta normal gamma EM expectation maximisation Kullback Leibler tail probability diagnostics"},{"title":"build_cache()","section":"Function reference","url":"reference/build_cache.html","kw":"build_cache cache precomputation tail probability grid evaluation"},{"title":"evaluate_design()","section":"Function reference","url":"reference/evaluate_design.html","kw":"evaluate_design evaluate design operating characteristics fused path from cache grid look_subset"},{"title":"calibrate_design()","section":"Function reference","url":"reference/calibrate_design.html","kw":"calibrate_design calibration threshold grid alpha power target efficacy_grid futility_grid"},{"title":"summarise_oc()","section":"Function reference","url":"reference/summarise_oc.html","kw":"summarise_oc summary operating characteristics tidy data frame"},{"title":"Articles","section":"Articles","url":"articles/index.html","kw":"articles vignettes case studies tutorials index"},{"title":"TRANSFORM-2 (continuous)","section":"Case study","url":"articles/transform2.html","kw":"TRANSFORM-2 transform2 esketamine MADRS Montgomery Asberg depression continuous endpoint mean difference Section 5.1 antidepressant Popova"},{"title":"ADRENAL re-design (binary)","section":"Case study","url":"articles/adrenal.html","kw":"ADRENAL binary endpoint septic shock hydrocortisone risk difference beta binomial Section 5.2 mortality calibration Venkatesh"},{"title":"BNT162b2 vaccine trial (count)","section":"Case study","url":"articles/bnt162b2.html","kw":"BNT162b2 bnt162b2 Pfizer BioNTech COVID vaccine count endpoint cases rate ratio log rate ratio gamma Poisson Section 5.3 Polack"},{"title":"CheckMate-141 HNSCC trial (time-to-event)","section":"Case study","url":"articles/checkmate141.html","kw":"CheckMate-141 checkmate141 nivolumab head neck cancer HNSCC survival time-to-event hazard ratio log hazard ratio Section 5.4 event-driven exponential Poisson recruitment Ferris"},{"title":"Changelog","section":"Release notes","url":"news/index.html","kw":"changelog news release notes version 0.1.0 features performance dependencies known limitations roadmap"},{"title":"Authors and citation","section":"About","url":"authors.html","kw":"authors developers maintainer citation BibTeX licence MIT Zhangyi He Feng Yu"}]
+[
+  {
+    "title": "adabay — home",
+    "section": "Overview",
+    "url": "index.html",
+    "kw": "home overview adabay Bayesian group sequential design GSD semi-simulation install installation quick start endpoints performance citation"
+  },
+  {
+    "title": "Function reference",
+    "section": "Reference",
+    "url": "reference/index.html",
+    "kw": "reference functions index API all exported S3 classes methods"
+  },
+  {
+    "title": "set_design()",
+    "section": "Function reference",
+    "url": "reference/set_design.html",
+    "kw": "set_design design endpoint look schedule sample size n_per_look exposure_per_look d_per_look effect_scale alternative sigma allocation_ratio"
+  },
+  {
+    "title": "set_prior()",
+    "section": "Function reference",
+    "url": "reference/set_prior.html",
+    "kw": "set_prior prior per arm conjugate beta normal gamma nig mixture"
+  },
+  {
+    "title": "set_decision()",
+    "section": "Function reference",
+    "url": "reference/set_decision.html",
+    "kw": "set_decision decision rule efficacy futility binding non-binding threshold posterior probability"
+  },
+  {
+    "title": "set_accrual()",
+    "section": "Function reference",
+    "url": "reference/set_accrual.html",
+    "kw": "set_accrual accrual recruitment Poisson piecewise callback follow-up dropout exponential"
+  },
+  {
+    "title": "fit_mixture()",
+    "section": "Function reference",
+    "url": "reference/fit_mixture.html",
+    "kw": "fit_mixture mixture conjugate non-conjugate prior beta normal gamma EM expectation maximisation Kullback Leibler tail probability diagnostics"
+  },
+  {
+    "title": "build_cache()",
+    "section": "Function reference",
+    "url": "reference/build_cache.html",
+    "kw": "build_cache cache precomputation tail probability grid evaluation"
+  },
+  {
+    "title": "evaluate_design()",
+    "section": "Function reference",
+    "url": "reference/evaluate_design.html",
+    "kw": "evaluate_design evaluate design operating characteristics fused path from cache grid look_subset"
+  },
+  {
+    "title": "calibrate_design()",
+    "section": "Function reference",
+    "url": "reference/calibrate_design.html",
+    "kw": "calibrate_design calibration threshold grid alpha power target efficacy_grid futility_grid"
+  },
+  {
+    "title": "summarise_oc()",
+    "section": "Function reference",
+    "url": "reference/summarise_oc.html",
+    "kw": "summarise_oc summary operating characteristics tidy data frame"
+  },
+  {
+    "title": "Articles",
+    "section": "Articles",
+    "url": "articles/index.html",
+    "kw": "articles vignettes case studies tutorials index"
+  },
+  {
+    "title": "TRANSFORM-2 esketamine re-design (continuous)",
+    "section": "Case study",
+    "url": "articles/transform2.html",
+    "kw": "TRANSFORM-2 transform2 esketamine MADRS Montgomery Asberg depression continuous endpoint mean difference Section 5.1 antidepressant Popova"
+  },
+  {
+    "title": "ADRENAL hydrocortisone re-design (binary)",
+    "section": "Case study",
+    "url": "articles/adrenal.html",
+    "kw": "ADRENAL binary endpoint septic shock hydrocortisone risk difference beta binomial Section 5.2 mortality calibration Venkatesh"
+  },
+  {
+    "title": "BNT162b2 vaccine re-design (count)",
+    "section": "Case study",
+    "url": "articles/bnt162b2.html",
+    "kw": "BNT162b2 bnt162b2 Pfizer BioNTech COVID vaccine count endpoint cases rate ratio log rate ratio gamma Poisson Section 5.3 Polack"
+  },
+  {
+    "title": "CheckMate-141 nivolumab re-design (time-to-event)",
+    "section": "Case study",
+    "url": "articles/checkmate141.html",
+    "kw": "CheckMate-141 checkmate141 nivolumab head neck cancer HNSCC survival time-to-event hazard ratio log hazard ratio Section 5.4 event-driven exponential Poisson recruitment Ferris"
+  },
+  {
+    "title": "Changelog",
+    "section": "Release notes",
+    "url": "news/index.html",
+    "kw": "changelog news release notes version 0.1.0 features performance dependencies known limitations roadmap"
+  },
+  {
+    "title": "Authors and citation",
+    "section": "About",
+    "url": "authors.html",
+    "kw": "authors developers maintainer citation BibTeX licence MIT Zhangyi He Feng Yu"
+  }
+]

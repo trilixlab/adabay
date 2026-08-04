@@ -6,10 +6,11 @@
 ## Original trial: Popova V, Daly EJ, Trivedi M, et al.
 ##                 Am J Psychiatry 2019;176:428-438.
 ##
-## n_trials = 1e6 (the high-precision manuscript budget) with cores = 4
-## (the manuscript reference workstation has four physical cores) so the
-## example reproduces the values in Tables M.7.1 and S.3.1 of the
-## manuscript. The run takes under a minute on the reference workstation.
+## n_trials = 1e6 (the high-precision manuscript budget) with cores = 8
+## (the manuscript reference workstation has eight logical threads) so the
+## example reproduces the values in Table 4 of the manuscript and
+## Table S2 of the supplement. The run takes under a minute on the
+## reference workstation.
 
 library(adabay)
 
@@ -34,10 +35,10 @@ dec <- set_decision(
 ##   (TRANSFORM-2 esketamine MADRS change at Day 28: -19.8).
 oc_h0 <- evaluate_design(des, pri, dec,
                          effect = list(mu_c = -15.8, mu_t = -15.8),
-                         n_trials = 1e6, cores = 4, seed = 1L)
+                         n_trials = 1e6, cores = 8, seed = 1L)
 oc_h1 <- evaluate_design(des, pri, dec,
                          effect = list(mu_c = -15.8, mu_t = -19.8),
-                         n_trials = 1e6, cores = 4, seed = 1L)
+                         n_trials = 1e6, cores = 8, seed = 1L)
 
 print(oc_h0)
 print(oc_h1)

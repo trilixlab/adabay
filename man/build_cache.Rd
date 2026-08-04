@@ -48,9 +48,10 @@ design$delta_null)}.}
 the simulator is forced to run in a single driver process (the user-
 supplied \code{cores} is ignored for the simulation pass) so that the
 per-trial RNG draws stored in the cache are bit-identical across
-worker counts. Pair with \code{cross_core_reproducible = TRUE} on any
-downstream \code{\link[=evaluate_design]{evaluate_design()}} / \code{\link[=calibrate_design]{calibrate_design()}} calls if full
-regulatory-grade reproducibility of the cached path is required.
+worker counts. The flag belongs on the simulating call only: the
+cached path (\code{\link[=evaluate_design]{evaluate_design()}} on an \code{adabay_cache}) and
+\code{\link[=calibrate_design]{calibrate_design()}} re-use the stored draws and are already
+core-independent, so setting it there has no effect.
 See \code{\link[=evaluate_design]{evaluate_design()}} for the cost discussion.}
 }
 \value{

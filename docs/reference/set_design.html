@@ -67,12 +67,21 @@
   <dt>exposure_per_look</dt><dd>Cumulative exposure at each look, pooled across both arms (count endpoint); split into per-arm targets by allocation_ratio.</dd>
   <dt>d_total</dt><dd>Total target number of events (tte endpoint).</dd>
   <dt>d_per_look</dt><dd>Cumulative number of events at each look (tte endpoint).</dd>
-  <dt>effect_scale</dt><dd>Effect-size parameterisation. Defaults are endpoint-specific: <code>"mean_difference"</code> (continuous),
-    <code>"risk_difference"</code> (binary), <code>"rate_difference"</code> (count), <code>"hazard_ratio"</code> (tte).</dd>
+  <dt>effect_scale</dt><dd>Effect-size parameterisation. Permitted values are
+    <code>"mean_difference"</code> or <code>"standardised_mean_difference"</code> (continuous);
+    <code>"risk_difference"</code>, <code>"risk_ratio"</code> or <code>"odds_ratio"</code> (binary);
+    <code>"rate_difference"</code>, <code>"rate_ratio"</code> or <code>"log_rate_ratio"</code> (count);
+    <code>"hazard_ratio"</code> or <code>"log_hazard_ratio"</code> (tte). Defaults are the first of each group:
+    <code>"mean_difference"</code>, <code>"risk_difference"</code>, <code>"rate_difference"</code>,
+    <code>"hazard_ratio"</code>.</dd>
   <dt>alternative</dt><dd><code>"greater"</code> for <em>H<sub>1</sub>: &Delta; &gt; &Delta;<sub>0</sub></em> or <code>"less"</code> for <em>H<sub>1</sub>: &Delta; &lt; &Delta;<sub>0</sub></em>.</dd>
   <dt>delta_null</dt><dd>Null-hypothesis effect-size value &Delta;<sub>0</sub>.</dd>
-  <dt>sigma</dt><dd>Common within-arm SD for normal-known-variance continuous priors.</dd>
-  <dt>allocation_ratio</dt><dd>Treatment-to-control allocation ratio (default 1) that splits each pooled per-look value into per-arm targets.</dd>
+  <dt>sigma</dt><dd>Common within-arm SD of the simulated outcome data. Required for every continuous design, since it
+    drives the Monte Carlo data generation; additionally used by the known-variance <code>normal</code> prior.</dd>
+  <dt>allocation_ratio</dt><dd>Treatment-to-control allocation ratio (default 1). It splits <code>n_per_look</code>
+    (continuous/binary) and <code>exposure_per_look</code> (count) into per-arm targets; for <code>"tte"</code> the pooled
+    <code>d_per_look</code>/<code>d_total</code> event targets are left unchanged and the pooled recruitment rate is split
+    into per-arm rates in this ratio instead.</dd>
 </dl>
 
 <div class="section-label">Value</div>

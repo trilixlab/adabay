@@ -3,8 +3,15 @@
 #' Approximates a user-supplied prior on an arm-specific parameter by a
 #' finite mixture of conjugate components (beta, normal or gamma kernels)
 #' fitted by minimisation of the empirical forward Kullback--Leibler
-#' divergence. The number of components is selected by an elbow rule on the
-#' divergence decrement, capped at \code{n_components_max}.
+#' divergence. The number of components is selected by
+#' \code{RBesT::automixfit()}'s AIC rule when the suggested \pkg{RBesT}
+#' package is installed. Otherwise the internal fallback locates an elbow in
+#' the divergence decrement -- the smallest \eqn{L} past which adding a
+#' component no longer improves the divergence by at least \code{tol_kl} --
+#' and then continues past that elbow one component at a time until the
+#' maximum absolute tail-probability error falls within \code{tol_tail},
+#' returning the smallest-error fit if none does. Either way the count is
+#' capped at \code{n_components_max}.
 #'
 #' Forward KL is mass-covering: it pressures the approximation to put mass
 #' wherever the true prior puts mass, but it does not, on its own, guarantee
@@ -29,12 +36,26 @@
 #'   metadata on the returned object.
 #' @param prior Either a function \code{prior(x)} returning the density at
 #'   \code{x}, or a numeric vector of independent samples drawn from the
-#'   prior. If a function is given, \code{n_samples} draws are produced by
-#'   inverse-transform sampling on a fine grid.
+#'   prior. A density function is accepted only for the beta kernel (binary
+#'   endpoints), where \code{n_samples} draws are produced by
+#'   inverse-transform sampling on a fine grid over \eqn{[0, 1]}. For the
+#'   gamma and normal kernels the support is unbounded and no fixed grid is
+#'   reliable, so \code{prior} must be a numeric vector of samples; supplying
+#'   a function raises an error.
 #' @param n_components_max Maximum number of mixture components to try.
-#' @param tol_kl Tolerance for the Kullback--Leibler decrement that defines
-#'   the elbow rule. The smallest L for which the decrement falls below
-#'   \code{tol_kl} is selected.
+#' @param tol_kl Mixture-fit tolerance, supplied on the natural (untransformed)
+#'   scale, e.g. \code{1e-3}. When \pkg{RBesT} is installed -- the default
+#'   path -- it is forwarded to \code{RBesT::automixfit()} as the
+#'   per-parameter EM convergence tolerance \code{eps}, which \pkg{RBesT}
+#'   expresses on a \eqn{-\log_{10}} scale, so \code{tol_kl = 1e-3} is passed
+#'   as \code{eps = 3}; the number of components is then chosen by the AIC
+#'   rule inside \code{RBesT::automixfit()}. When \pkg{RBesT} is absent, the
+#'   internal expectation-maximisation fallback uses \code{tol_kl} directly as
+#'   the Kullback--Leibler decrement defining the elbow: the elbow is the
+#'   smallest \eqn{L} past which adding a component no longer improves the
+#'   divergence by at least \code{tol_kl}. That elbow is the starting point,
+#'   not the answer, because the \code{tol_tail} stage may select a larger
+#'   \eqn{L}.
 #' @param tol_tail Tolerance for the maximum absolute tail-probability error
 #'   across the default tail thresholds; \code{warning()} fires when the
 #'   error exceeds this value. Default \code{5e-3} (0.5 percentage points).
@@ -91,10 +112,17 @@ fit_mixture <- function(endpoint, arm,
       n_components_max < 1L)
     stop("'n_components_max' must be a positive integer.", call. = FALSE)
   n_components_max <- as.integer(n_components_max)
-  tail_quantiles <- sort(unique(as.numeric(tail_quantiles)))
-  if (any(!is.finite(tail_quantiles)) ||
+  ## Validate before sort(): sort() drops NAs (na.last = NA), so an is.finite
+  ## check afterwards can never fire, and an all-NA input would silently become
+  ## a zero-length vector that passes every any() test.
+  tail_quantiles <- as.numeric(tail_quantiles)
+  if (length(tail_quantiles) == 0L || any(!is.finite(tail_quantiles)) ||
       any(tail_quantiles <= 0 | tail_quantiles >= 1))
-    stop("'tail_quantiles' must lie strictly in (0, 1).", call. = FALSE)
+    stop("'tail_quantiles' must be a non-empty numeric vector with every ",
+         "value strictly in (0, 1).", call. = FALSE)
+  tail_quantiles <- sort(unique(tail_quantiles))
+  if (length(tol_kl) != 1L || !is.finite(tol_kl) || tol_kl <= 0)
+    stop("'tol_kl' must be a positive scalar.", call. = FALSE)
   if (length(tol_tail) != 1L || !is.finite(tol_tail) || tol_tail <= 0)
     stop("'tol_tail' must be a positive scalar.", call. = FALSE)
   if (!is.null(seed) &&
@@ -126,10 +154,14 @@ fit_mixture <- function(endpoint, arm,
 
   ## Use RBesT if available; otherwise fall back to internal EM (beta only).
   if (requireNamespace("RBesT", quietly = TRUE)) {
+    ## RBesT expresses its per-parameter EM convergence tolerance on a
+    ## -log10 scale: EM_bmm_ab()/EM_gmm() rescale a length-1 'eps' as
+    ## rep(10^(-eps), 3). Passing tol_kl directly would request a tolerance
+    ## of 10^(-1e-3) ~ 0.998 rather than 1e-3, so convert here.
     fit <- RBesT::automixfit(sample = samples,
                              Nc = seq_len(n_components_max),
                              type = rbest_kernel,
-                             eps = tol_kl)
+                             eps = -log10(tol_kl))
     trace <- attr(fit, "traceMix")
     final <- trace[[length(trace)]]
     parsed <- .parse_rbest_mix(final, family)
@@ -203,12 +235,24 @@ fit_mixture <- function(endpoint, arm,
   if (!is.function(prior))
     stop("'prior' must be a numeric vector or a density function.",
          call. = FALSE)
-  ## Inverse-transform sampling on a fine grid covering the appropriate support.
-  rng <- switch(family,
-                beta   = c(1e-6, 1 - 1e-6),
-                normal = c(-1e3, 1e3),  # truncated; users should supply samples
-                gamma  = c(1e-6, 1e3))
-  grid <- seq(rng[1], rng[2], length.out = 5000)
+  ## Inverse-transform sampling on a fine grid. Only the beta kernel has a
+  ## bounded support on which a fixed grid is safe: on [0, 1] the 5000-node
+  ## grid has spacing 2e-4. For the gamma and normal kernels any fixed range
+  ## wide enough to be generally useful is far too coarse for the small rates
+  ## typical of count and time-to-event designs (a 0-1000 range gives spacing
+  ## 0.2, so a prior centred near 0.02 would collapse onto a single node and
+  ## be returned, silently, as a degenerate sample). Rather than return a
+  ## corrupted prior we require pre-drawn samples for those kernels.
+  if (family != "beta")
+    stop("For the '", family, "' kernel (endpoint ",
+         if (family == "gamma") "\"count\" or \"tte\"" else "\"continuous\"",
+         "), 'prior' must be supplied as a numeric vector of samples rather ",
+         "than a density function: inverse-transform sampling on a fixed grid ",
+         "is not reliable on an unbounded support. Draw from the prior ",
+         "directly, e.g. prior = ",
+         if (family == "gamma") "rgamma(1e4, shape, rate)." else "rnorm(1e4, mean, sd).",
+         call. = FALSE)
+  grid <- seq(1e-6, 1 - 1e-6, length.out = 5000)
   d    <- pmax(0, prior(grid))
   if (!any(d > 0))
     stop("Density evaluated to zero on the sampling grid.", call. = FALSE)

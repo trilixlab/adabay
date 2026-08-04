@@ -76,8 +76,8 @@ be evaluated by <a href="evaluate_design.html"><code>evaluate_design()</code></a
 </dl>
 
 <div class="section-label">Value</div>
-<p>An object of class <code>"adabay_cache"</code>. <code>print()</code> displays the simulation budget, the union of look
-times, and the union of effect-size thresholds.</p>
+<p>An object of class <code>"adabay_cache"</code>. <code>print()</code> displays the endpoint, the look count, the
+simulation budget, and the sorted vector of cached effect-size thresholds.</p>
 
 <div class="section-label">Memory footprint</div>
 <p>The cache stores per-look tail probabilities at every virtual trial and effect-size threshold. For
@@ -86,7 +86,29 @@ the cache holds approximately 8&middot;<em>R</em>&middot;<em>K</em>&middot;<em>N
 <em>R</em>=10<sup>5</sup>, <em>K</em>=5, <em>N<sub>T</sub></em>=3 the cache is roughly 12&nbsp;MB.</p>
 
 <div class="section-label">Examples</div>
-<pre><code><span class="code-comment">## Build a cache, then score two threshold combinations in milliseconds</span>
+<pre><code><span class="code-comment">## Setup: the five-look ADRENAL re-design of the manuscript's Section 5.2</span>
+des &lt;- <span class="code-function">set_design</span>(
+  endpoint     = <span class="code-string">"binary"</span>,
+  n_per_look   = <span class="code-function">c</span>(<span class="code-number">760</span>, <span class="code-number">1520</span>, <span class="code-number">2280</span>, <span class="code-number">3040</span>, <span class="code-number">3800</span>),
+  effect_scale = <span class="code-string">"risk_difference"</span>,
+  alternative  = <span class="code-string">"less"</span>
+)
+pri &lt;- <span class="code-function">set_prior</span>(
+  endpoint = <span class="code-string">"binary"</span>,
+  arms = <span class="code-function">list</span>(c = <span class="code-function">list</span>(family = <span class="code-string">"beta"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>),
+              t = <span class="code-function">list</span>(family = <span class="code-string">"beta"</span>, a = <span class="code-number">1</span>, b = <span class="code-number">1</span>))
+)
+dec &lt;- <span class="code-function">set_decision</span>(
+  efficacy = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.99</span>)),
+  futility = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.90</span>))
+)
+dec_a &lt;- dec
+dec_b &lt;- <span class="code-function">set_decision</span>(
+  efficacy = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = -<span class="code-number">0.05</span>, threshold_prob = <span class="code-number">0.99</span>)),
+  futility = <span class="code-function">list</span>(<span class="code-function">list</span>(threshold_effect = <span class="code-number">0</span>, threshold_prob = <span class="code-number">0.90</span>))
+)
+
+<span class="code-comment">## Build a cache, then score two threshold combinations in milliseconds</span>
 cache &lt;- <span class="code-function">build_cache</span>(
   design   = des,
   prior    = pri,

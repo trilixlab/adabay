@@ -39,7 +39,7 @@
 <h1>Changelog</h1>
 <p class="lead">Release notes for <strong>adabay</strong>.</p>
 
-<h2>adabay 0.1.0 <span class="badge badge-version">2026-07-07</span></h2>
+<h2>adabay 0.1.0 <span class="badge badge-version">2026-07-28</span></h2>
 
 <p>Initial public release accompanying the manuscript &ldquo;<em>adabay: an R package for rapid evaluation and
 calibration of Bayesian group sequential designs across common endpoint types</em>&rdquo;.</p>
@@ -59,15 +59,14 @@ calibration of Bayesian group sequential designs across common endpoint types</e
     <code>build_cache()</code>) aggregates pre-computed per-look tail probabilities cheaply.
     <code>calibrate_design()</code> sweeps a threshold grid against the cached path for the caching API of
     Section 6 of the manuscript; <code>summarise_oc()</code> tidies the results across designs.</li>
-  <li><strong>Methods</strong>: <code>print()</code> and <code>summary()</code> for <code>adabay_oc</code>;
-    <code>plot()</code> for <code>adabay_oc</code> (per-look stopping-probability fan plot) and <code>adabay_prior_arm</code>
-    (density overlay with tail-quantile rugs).</li>
+  <li><strong>Methods</strong>: <code>print()</code> for all nine S3 classes &mdash; <code>adabay_design</code>, <code>adabay_prior</code>, <code>adabay_prior_arm</code>, <code>adabay_decision</code>, <code>adabay_accrual</code>, <code>adabay_cache</code>, <code>adabay_calibration</code>, <code>adabay_calibration_best</code> and <code>adabay_oc</code>; <code>summary()</code> for <code>adabay_oc</code> only; <code>plot()</code> for <code>adabay_oc</code> (per-look stopping-probability bar chart) and <code>adabay_prior_arm</code> (density overlay with tail-quantile rugs).</li>
 </ul>
 
 <h3>Implementation</h3>
 <ul>
-  <li><strong>Semi-simulation core</strong> in C++ via <code>Rcpp</code> with a 64-node Gauss&ndash;Legendre quadrature
-    for the per-look posterior of &Delta;.</li>
+  <li><strong>C++ hot paths</strong> via <code>Rcpp</code>: the time-to-event trial simulator and a fixed 64-node
+    Gauss&ndash;Legendre quadrature for the binary and count rate-difference tails of &Delta;. The remaining simulation
+    loops, conjugate updates and mixture reweighting are in R.</li>
   <li><strong>Parallel execution</strong> via <code>parallel::mclapply</code> on POSIX and
     <code>parallel::parLapply</code> on Windows, with the L'Ecuyer combined multiple-recursive generator for per-worker
     streams.</li>
@@ -81,10 +80,10 @@ calibration of Bayesian group sequential designs across common endpoint types</e
 
 <h3>Performance</h3>
 <p>Benchmarked against BATSS and adaptr at matched <em>R</em>&nbsp;=&nbsp;10,000 simulation budgets on the binary ADRENAL
-re-design (Section 7.4 of the manuscript): per-virtual-trial speedups of approximately 31&times; versus adaptr (between one
-and two orders of magnitude) and 1.6&thinsp;&times;&thinsp;10<sup>4</sup>&thinsp;&times; versus BATSS (four orders of
+re-design (Section 7.4 of the manuscript): per-virtual-trial speedups of approximately 39&times; versus adaptr (between one
+and two orders of magnitude) and 2.0&thinsp;&times;&thinsp;10<sup>4</sup>&thinsp;&times; versus BATSS (four orders of
 magnitude) on the binary case, with all three packages running on 8 cores at the matched budget. At <em>R</em>&nbsp;=&nbsp;10<sup>6</sup>, adabay completes the paired scenarios in roughly
-6&ndash;169 seconds on 8 cores across the four endpoints, with Monte Carlo standard errors of 0.02&ndash;0.04 percentage
+5&ndash;138 seconds on 8 cores across the four endpoints, with Monte Carlo standard errors of 0.02&ndash;0.04 percentage
 points on the type I error rate and the power.</p>
 
 <h3>Documentation and scripts</h3>
@@ -95,10 +94,10 @@ points on the type I error rate and the power.</p>
   <li><strong>Four reproducible case-study scripts</strong> in <code>inst/examples/</code> reproducing Section 5 of the
     manuscript:
     <ul>
-      <li><code>transform2.R</code> &mdash; TRANSFORM-2 esketamine trial (continuous).</li>
-      <li><code>adrenal.R</code> &mdash; ADRENAL re-design (binary).</li>
-      <li><code>bnt162b2.R</code> &mdash; Pfizer&ndash;BioNTech BNT162b2 vaccine trial (count).</li>
-      <li><code>checkmate141.R</code> &mdash; CheckMate-141 HNSCC trial (time-to-event).</li>
+      <li><code>transform2.R</code> &mdash; TRANSFORM-2 esketamine re-design (continuous).</li>
+      <li><code>adrenal.R</code> &mdash; ADRENAL hydrocortisone re-design (binary).</li>
+      <li><code>bnt162b2.R</code> &mdash; BNT162b2 vaccine re-design (count).</li>
+      <li><code>checkmate141.R</code> &mdash; CheckMate-141 nivolumab re-design (time-to-event).</li>
     </ul>
   </li>
 </ul>
@@ -126,7 +125,7 @@ points on the type I error rate and the power.</p>
   <div class="sidebar-block">
     <h2>Versions</h2>
     <ul>
-      <li><strong>0.1.0</strong> (2026-07-07) &mdash; initial release</li>
+      <li><strong>0.1.0</strong> (2026-07-28) &mdash; initial release</li>
     </ul>
   </div>
   <div class="sidebar-block">

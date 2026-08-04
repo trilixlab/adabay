@@ -42,11 +42,13 @@
 </div>
 
 <div class="section-label">Description</div>
-<p>Configures the recruitment, follow-up and dropout processes used in computing the expected study duration. Three
-recruitment models are supported out of the box: a homogeneous Poisson process, a piecewise-constant Poisson process,
-and an arbitrary user-supplied callback. Per-patient follow-up is configured via either a fixed deterministic duration
-or a callback. Dropout is modelled either as administrative censoring at the look times (default) or as exponential
-dropout with a user-supplied per-arm rate.</p>
+<p>Configures the recruitment process and the per-patient follow-up duration used in computing the expected study
+duration; the follow-up term enters the reported duration for the sample-size-driven continuous and binary schedules
+only, not the exposure-driven count schedule or the event-driven time-to-event schedule. Three recruitment models are supported out of the box: a homogeneous Poisson process, a piecewise-constant
+Poisson process, and an arbitrary user-supplied callback. Per-patient follow-up is a single non-negative numeric
+duration; a function-valued <code>follow_up</code> is not supported in this release. <code>dropout</code> and
+<code>dropout_rate</code> are validated and stored for forward compatibility, but are not consumed by any simulator
+or reported quantity in this release.</p>
 
 <div class="section-label">Usage</div>
 <pre><code><span class="code-function">set_accrual</span>(
@@ -62,13 +64,16 @@ dropout with a user-supplied per-arm rate.</p>
 <div class="section-label">Arguments</div>
 <dl class="args">
   <dt>model</dt><dd>Recruitment model: <code>"poisson"</code> (homogeneous), <code>"piecewise"</code> (piecewise-constant
-    with <code>breakpoints</code>) or <code>"callback"</code> (user-supplied).</dd>
+    with <code>breakpoints</code>) or <code>"callback"</code> (user-supplied). Only <code>"poisson"</code> affects the
+    reported expected duration: the other models are accepted for specification, but <code>expected_duration</code> is
+    returned as <code>NA</code> for them, and time-to-event designs require <code>"poisson"</code> outright.</dd>
   <dt>rate</dt><dd>Recruitment rate, pooled across both arms; split into per-arm rates by the design's allocation_ratio. For <code>"piecewise"</code>, a numeric vector with one rate per segment.</dd>
   <dt>breakpoints</dt><dd>Calendar-time breakpoints for <code>"piecewise"</code>; numeric vector of length one less than
     the number of segments.</dd>
   <dt>callback</dt><dd>User-supplied function returning recruitment times when <code>model = "callback"</code>.</dd>
-  <dt>follow_up</dt><dd>Per-patient follow-up duration (fixed deterministic), or a callback.</dd>
-  <dt>dropout</dt><dd><code>"none"</code> (administrative censoring at look times, the default) or <code>"exponential"</code>.</dd>
+  <dt>follow_up</dt><dd>Per-patient follow-up duration: a single non-negative numeric. A function-valued
+    <code>follow_up</code> is not supported in this release and is rejected with an informative error.</dd>
+  <dt>dropout</dt><dd><code>"none"</code> (the default) or <code>"exponential"</code>. Stored only; not consumed in this release.</dd>
   <dt>dropout_rate</dt><dd>Per-arm dropout rate when <code>dropout = "exponential"</code>.</dd>
 </dl>
 

@@ -1,28 +1,32 @@
 Package: adabay
 Type: Package
-Title: Rapid Evaluation and Calibration of Bayesian Group Sequential
-        Designs Across Common Endpoint Types
+Title: Rapid Bayesian Group Sequential Design Evaluation and
+        Calibration
 Version: 0.1.0
-Date: 2026-07-07
+Date: 2026-08-04
 Authors@R: c(
     person(given = "Zhangyi", family = "He",
            email = "zhe1@georgeinstitute.org.uk",
-           role = "aut"),
+           role = c("aut", "cph")),
     person(given = "Feng", family = "Yu",
            email = "feng.yu@bristol.ac.uk",
-           role = c("aut", "cre")))
+           role = c("aut", "cre", "cph")))
 Description: Implements a semi-simulation framework for the rapid evaluation
     and calibration of Bayesian group sequential designs (GSDs). Virtual
     trials are simulated by Monte Carlo, and per-look posteriors are
     computed in closed form by approximating any user-specified prior with a
-    finite mixture of conjugate components. Supports continuous (normal-
-    normal or normal-inverse-gamma updates), binary (beta-binomial), count
-    (gamma-Poisson) and time-to-event (gamma-exponential) primary endpoints,
-    posterior-probability decision rules with efficacy and binding or
+    finite mixture of conjugate components. Supports continuous
+    (normal-normal or normal-inverse-gamma updates), binary (beta-binomial),
+    count (gamma-Poisson) and time-to-event (gamma-exponential) primary
+    endpoints, posterior-probability decision rules with efficacy and binding or
     non-binding futility stopping, and a precomputation strategy that
     decouples threshold and look-time selection from the simulation pass.
+    Methods are described in He, Yu, Cro and Billot (2026)
+    <doi:10.48550/arXiv.2607.22900>, and the package in He and Yu (2026)
+    <doi:10.48550/arXiv.2608.01068>.
 License: MIT + file LICENSE
-URL: https://github.com/trilixlab/adabay
+URL: https://github.com/trilixlab/adabay,
+        https://trilixlab.github.io/adabay/
 BugReports: https://github.com/trilixlab/adabay/issues
 Depends: R (>= 4.0.0)
 Imports: graphics, parallel, Rcpp (>= 1.0.7), stats
@@ -36,7 +40,7 @@ Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
 Roxygen: list(markdown = TRUE)
 NeedsCompilation: yes
-Packaged: 2026-07-18 22:46:34 UTC; jefferyhe
-Author: Zhangyi He [aut],
-  Feng Yu [aut, cre]
+Packaged: 2026-08-04 08:13:59 UTC; jefferyhe
+Author: Zhangyi He [aut, cph],
+  Feng Yu [aut, cre, cph]
 Maintainer: Feng Yu <feng.yu@bristol.ac.uk>

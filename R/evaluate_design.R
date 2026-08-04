@@ -7,7 +7,10 @@
 #' \describe{
 #'   \item{`adabay_design`}{Fused path: simulates `n_trials` virtual trials at
 #'     the supplied data-generating values, computes per-look posterior tail
-#'     probabilities of \eqn{\Delta} in closed form, and applies the supplied
+#'     probabilities of \eqn{\Delta} (in closed form, or by fixed-node
+#'     Gauss--Legendre quadrature on the binary and count rate-difference
+#'     scales and by \code{stats::integrate()} on the continuous
+#'     normal--inverse-gamma path), and applies the supplied
 #'     decision rule to obtain the per-look stopping probabilities, the
 #'     overall type I error rate (or power under the alternative), and the
 #'     expected sample size, all in one call. Use this for one-off evaluation
@@ -20,17 +23,23 @@
 #' }
 #'
 #' Slow inner integrals are dispatched to C++ implementations via
-#' \pkg{Rcpp}; the trial-level loop is embarrassingly parallel and is
-#' parallelised across `cores` workers via [parallel::mclapply()] (POSIX) or
-#' [parallel::parLapply()] (Windows).
+#' \pkg{Rcpp}, except on the continuous normal--inverse-gamma path, which
+#' uses \code{stats::integrate()} at the R level. The trial-level
+#' data-generating loop is embarrassingly parallel and is parallelised across
+#' `cores` workers via [parallel::mclapply()] (POSIX) or
+#' [parallel::parLapply()] (Windows); the posterior and aggregation passes are
+#' vectorised and run serially.
 #'
 #' @param x A `adabay_design` object (fused path) or a `adabay_cache` object
 #'   (cached path).
 #' @param prior For the fused path only: a `adabay_prior` from [set_prior()].
 #' @param decision A `adabay_decision` from [set_decision()].
-#' @param effect For the fused path only: named list of data-generating
-#'   values; see the worked examples in the package vignettes for endpoint-
-#'   specific names.
+#' @param effect For the fused path only: named list of per-arm
+#'   data-generating values, named \code{mu_c}/\code{mu_t} for continuous,
+#'   \code{theta_c}/\code{theta_t} (or \code{p_c}/\code{p_t}) for binary,
+#'   and \code{lambda_c}/\code{lambda_t} for count and time-to-event. The
+#'   generic aliases \code{psi_c}/\code{psi_t} are accepted for every
+#'   endpoint.
 #' @param accrual For the fused path only: a [set_accrual()] specification.
 #'   **Required** for tte designs, which are always staggered: the
 #'   recruitment rate fixes the Poisson enrolment process whose arrival times
@@ -82,12 +91,14 @@
 #'       time realised (during simulation) at each trial's own stopping
 #'       look; for continuous, binary and count -- which have no simulated
 #'       recruitment timeline -- it is an analytic approximation.}
-#'     \item{`tau`, `C`}{Per-trial stopping look and trial outcome code
-#'       (`+1`/`-1`/`0` for efficacy/futility/no-cross).}
+#'     \item{`tau`, `C`}{Per-trial stopping look and trial outcome code:
+#'       `+1` for an efficacy stop and `-1` for a futility stop or for
+#'       reaching the final look without efficacy. The final analysis always
+#'       forces a decision, so every trial ends at `+1` or `-1`.}
 #'     \item{`n_trials`, `effect`, `design`, `decision`}{Echoes of the inputs
 #'       for downstream reproducibility. The fused path additionally records
-#'       `seed`, `call` and (when supplied) `accrual`; these are omitted on
-#'       the cached path.}
+#'       `seed` and `call`, which are omitted on the cached path, and
+#'       `accrual`, which is carried whenever the cache was built with one.}
 #'   }
 #'
 #' @section Binding vs non-binding futility:

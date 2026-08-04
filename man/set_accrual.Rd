@@ -23,7 +23,11 @@ set_accrual(
 breakpoints in \code{breakpoints} and rates in \code{rate}.}
 \item{\code{"callback"}}{user-supplied callback that returns
 recruitment times for a given target sample size.}
-}}
+}
+Only \code{"poisson"} affects the reported expected duration: the other
+models are accepted for specification, but \code{expected_duration} is
+returned as \code{NA} for them, and time-to-event designs require
+\code{"poisson"} outright.}
 
 \item{rate}{Recruitment rate, pooled across both arms (matching
 \code{n_per_look}/\code{exposure_per_look}/\code{d_per_look} in
@@ -39,9 +43,9 @@ with \code{model = "piecewise"}).}
 \item{callback}{Function with signature \code{function(n, ...)} returning
 recruitment times (only used with \code{model = "callback"}).}
 
-\item{follow_up}{Per-patient follow-up duration. Either a single
-non-negative numeric or a function with signature
-\code{function(n, ...)} returning a vector of follow-up times.}
+\item{follow_up}{Per-patient follow-up duration: a single non-negative
+numeric. A function-valued \code{follow_up} is not supported in this release
+and is rejected with an informative error.}
 
 \item{dropout}{Dropout model. One of \code{"none"} (the default,
 administrative censoring at the look times) or \code{"exponential"}
@@ -54,9 +58,13 @@ with rate \code{dropout_rate}.}
 An object of class \code{"adabay_accrual"}.
 }
 \description{
-Configures the recruitment process, the per-patient follow-up duration and
-the dropout process used to compute the expected study duration alongside
-the operating characteristics.
+Configures the recruitment process and the per-patient follow-up duration
+used to compute the expected study duration alongside the operating
+characteristics. The follow-up term enters the reported duration for the
+sample-size-driven continuous and binary schedules only; the exposure-driven
+count schedule and the event-driven time-to-event schedule do not add it. \code{dropout} and \code{dropout_rate} are accepted and stored for
+forward compatibility but are not consumed by any simulator or reported
+quantity in this release.
 }
 \examples{
 set_accrual(model = "poisson", rate = 40)

@@ -1,10 +1,12 @@
 ## ADRENAL re-design (binary endpoint).
 ## Reproduces the binary-endpoint case study of Section 5.2 of the manuscript.
+## Original trial: Venkatesh B, Finfer S, Cohen J, et al. NEJM 2018;378:797-808.
 ##
-## n_trials = 1e6 (the high-precision manuscript budget) with cores = 4
-## (the manuscript reference workstation has four physical cores) so the
-## example reproduces the values in Tables M.7.2 and S.3.2 of the
-## manuscript. The run takes a few minutes on the reference workstation.
+## n_trials = 1e6 (the high-precision manuscript budget) with cores = 8
+## (the manuscript reference workstation has eight logical threads) so the
+## example reproduces the values in Table 5 of the manuscript and
+## Table S3 of the supplement. The run takes a few minutes on the
+## reference workstation.
 
 library(adabay)
 
@@ -24,10 +26,10 @@ dec <- set_decision(
 
 oc_h0 <- evaluate_design(des, pri, dec,
                          effect = list(theta_c = 0.33, theta_t = 0.33),
-                         n_trials = 1e6, cores = 4, seed = 1L)
+                         n_trials = 1e6, cores = 8, seed = 1L)
 oc_h1 <- evaluate_design(des, pri, dec,
                          effect = list(theta_c = 0.33, theta_t = 0.28),
-                         n_trials = 1e6, cores = 4, seed = 1L)
+                         n_trials = 1e6, cores = 8, seed = 1L)
 
 print(oc_h0)
 print(oc_h1)

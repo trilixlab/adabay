@@ -36,7 +36,8 @@ thresholds to search. Use \code{c(1)} to disable futility.}
 \item{futility_binding}{Logical. Defaults to \code{FALSE}.}
 }
 \value{
-A list with elements:
+An object of class \code{"adabay_calibration"}: a list with
+elements
 \describe{
 \item{\code{best}}{An object of class \code{"adabay_calibration_best"}
 (or \code{NULL}, with a warning, if no grid point meets both

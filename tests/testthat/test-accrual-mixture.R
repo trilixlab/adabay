@@ -34,8 +34,20 @@ test_that("set_accrual rejects malformed inputs", {
                "callback")
   expect_error(set_accrual(model = "poisson", rate = 20, follow_up = -1),
                "non-negative")
+  expect_error(set_accrual(model = "poisson", rate = 20,
+                           follow_up = function(n, ...) rep(1, n)),
+               "not supported")
   expect_error(set_accrual(model = "poisson", rate = 20, dropout = "exponential"),
                "dropout_rate")
+})
+
+test_that("fit_mixture rejects a density function for non-beta kernels", {
+  expect_error(fit_mixture(endpoint = "count", arm = "c",
+                           prior = function(x) dgamma(x, 2, 100)),
+               "numeric vector of samples")
+  expect_error(fit_mixture(endpoint = "continuous", arm = "c",
+                           prior = function(x) dnorm(x, 0, 1)),
+               "numeric vector of samples")
 })
 
 test_that("fit_mixture returns a adabay_prior_arm with tail diagnostics (samples input)", {

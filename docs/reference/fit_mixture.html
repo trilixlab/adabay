@@ -43,8 +43,9 @@
 
 <div class="section-label">Description</div>
 <p>Fits a finite mixture of conjugate components (beta, normal, or gamma, depending on the endpoint) to a user-supplied
-prior by minimisation of the empirical forward Kullback&ndash;Leibler divergence, with an elbow rule for component
-selection. When the suggested <code>RBesT</code> package is available, the fit is delegated to
+prior by minimisation of the empirical forward Kullback&ndash;Leibler divergence. The component count is chosen by
+<code>RBesT::automixfit()</code>'s AIC rule when <code>RBesT</code> is installed, and otherwise by an elbow on the
+divergence decrement followed by a tail-probability stage that may select a larger count. When the suggested <code>RBesT</code> package is available, the fit is delegated to
 <code>RBesT::automixfit()</code> for robust kernel-specific EM updates; otherwise a built-in beta-kernel EM fallback is
 used. Returns per-quantile tail-probability diagnostics and emits a runtime warning when the maximum absolute
 tail-probability error exceeds <code>tol_tail</code>. The <code>print()</code> method prints the per-quantile error
@@ -68,9 +69,13 @@ with rugs at the tail thresholds.</p>
 <dl class="args">
   <dt>endpoint</dt><dd>Endpoint type. Determines the conjugate kernel used in the mixture.</dd>
   <dt>arm</dt><dd><code>"c"</code> (control) or <code>"t"</code> (treatment).</dd>
-  <dt>prior</dt><dd>Density function or numeric vector of samples drawn from the user-specified prior.</dd>
+  <dt>prior</dt><dd>Density function or numeric vector of samples drawn from the user-specified prior. A density function is accepted only for the beta kernel (binary endpoints); for the gamma and normal kernels the support is unbounded and no fixed sampling grid is reliable, so <code>prior</code> must be a numeric vector of samples.</dd>
   <dt>n_components_max</dt><dd>Maximum number of mixture components to try; default <code>5</code>.</dd>
-  <dt>tol_kl</dt><dd>Tolerance for the elbow rule on the relative KL decrement (component selection).</dd>
+  <dt>tol_kl</dt><dd>Mixture-fit tolerance, on the natural (untransformed) scale, e.g. <code>1e-3</code>. With
+    <code>RBesT</code> installed &mdash; the default path &mdash; it is forwarded to <code>RBesT::automixfit()</code> as
+    the per-parameter EM convergence tolerance <code>eps</code>, which <code>RBesT</code> expresses on a
+    &minus;log<sub>10</sub> scale, and the component count is chosen by that function's AIC rule. Without
+    <code>RBesT</code>, the internal EM fallback uses it directly as the KL decrement of the elbow rule.</dd>
   <dt>tol_tail</dt><dd>Tolerance on the maximum absolute tail-probability error at the quantile grid <code>tail_quantiles</code>.
     A warning is emitted when this tolerance is exceeded.</dd>
   <dt>tail_quantiles</dt><dd>Quantile grid used to compute the empirical tail-probability error table.</dd>
@@ -94,8 +99,8 @@ and the empirical samples used for the overlay plot.</p>
 <pre><code><span class="code-comment">## Logit-normal prior on the control rate, approximated by a beta mixture</span>
 pri_c &lt;- <span class="code-function">fit_mixture</span>(
   endpoint = <span class="code-string">"binary"</span>, arm = <span class="code-string">"c"</span>,
-  prior    = <span class="code-keyword">function</span>(theta) <span class="code-function">dlnorm</span>(theta / (<span class="code-number">1</span> - theta),
-                                    meanlog = -<span class="code-number">0.7</span>, sdlog = <span class="code-number">0.4</span>),
+  prior    = <span class="code-keyword">function</span>(theta) <span class="code-function">dnorm</span>(<span class="code-function">log</span>(theta / (<span class="code-number">1</span> - theta)),
+                                   mean = -<span class="code-number">0.7</span>, sd = <span class="code-number">0.4</span>) / (theta * (<span class="code-number">1</span> - theta)),
   n_components_max = <span class="code-number">5</span>,
   tol_kl   = <span class="code-number">1e-3</span>,
   tol_tail = <span class="code-number">5e-3</span>
